@@ -1,0 +1,46 @@
+{
+	"adc": {
+		"immediate": "0x69",
+		"zero-page": "0x65",
+		"zero-page-x": "0x75",
+		"absolute": "0x6d",
+		"absolute-x": "0x7d",
+		"absolute-y": "0x79",
+		"indirect-x": "0x61",
+		"indirect-y": "0x71",
+		"ind-zero-page": "0x72"
+	},
+	"ldx": {
+		"immediate": "0xa9",
+		"zero-page": "0xa5",
+		"zero-page-x": "0xb5",
+		"absolute": "0xad",
+		"absolute-x": "0xbd",
+		"absolute-y": "0xb9",
+		"indirect-x": "0xa1",
+		"indirect-y": "0xb1",
+		"ind-zero-page": "0xb2"
+	},
+	"sda": {
+		"immediate": "",
+		"zero-page": "0x85",
+		"zero-page-x": "0x95",
+		"absolute": "0x8d",
+		"absolute-x": "0x9d",
+		"absolute-y": "0x99",
+		"indirect-x": "0x81",
+		"indirect-y": "0x91",
+		"ind-zero-page": "0x92"
+	},
+	"_": {
+		"immediate": "0x",
+		"zero-page": "0x",
+		"zero-page-x": "0x",
+		"absolute": "0x",
+		"absolute-x": "0x",
+		"absolute-y": "0x",
+		"indirect-x": "0x",
+		"indirect-y": "0x",
+		"ind-zero-page": "0x"
+	}
+}
