@@ -1,14 +1,15 @@
-/*
-	-o = output file
-	-p = pre compile file
-	-b = binary type output (bin or prg)
-
-*/
 import recursion from "./recursion.js"
 import * as color from "https://deno.land/std/fmt/colors.ts"
 
 const findCodeName = string => string.search(/^.*\.(asm|s)$/) === -1 ? null : string
 const checkIfHaveCodeFileName = ({ code }) => code === null ? false : true
+
+const help = `
+-h this message
+-o output file
+-p pre compile file
+-b binary type output (bin or prg(default))
+`
 
 const filterArgs = (argsArray, { code, output, preCompile, binaryType }, arrayPosition = 0) => {
 	const arrayNexPosition = arrayPosition + 1
@@ -27,6 +28,8 @@ const filterArgs = (argsArray, { code, output, preCompile, binaryType }, arrayPo
 				return [argsArray, { code, output, "preCompile": nextArg, binaryType }, arrayNexPosition + 1]
 			case "-b":
 				return [argsArray, { code, output, preCompile, "binaryType": nextArg }, arrayNexPosition + 1]
+			case "-h":
+				throw color.green(help)
 		}
 }
 
