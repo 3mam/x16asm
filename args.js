@@ -33,7 +33,7 @@ const parserArgs = (argsArray, { fileName, output, preCompile, binaryType }, arr
 		}
 }
 
-export default (argsArray, { fileName, output, preCompile, binaryType }) => {
+export const processArg = (argsArray, { fileName, output, preCompile, binaryType }) => {
 	const argsObject = recursion(parserArgs)(argsArray, { fileName, output, preCompile, binaryType })
 	if (typeof argsObject === "string") {
 		console.log(color.green(argsObject))
