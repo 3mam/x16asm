@@ -17,17 +17,29 @@ const VALUE = 3
 const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0, type = 0) => {
 	switch (asmSource[cursorPosition]) {
 		case "\n":
-			return [[...command, { type: type, start: startPoint, end: cursorPosition }],
-			cursorPosition + 1, cursorPosition, 0]
+			return [
+				[...command, { type: type, start: startPoint, end: cursorPosition }],
+				cursorPosition + 1,
+				cursorPosition,
+				0
+			]
 		case " ":
 			if (type > COMMENT)
-				return [[...command, { type: type, start: startPoint, end: cursorPosition }],
-				cursorPosition + 1, cursorPosition+1, 0]
+				return [
+					[...command, { type: type, start: startPoint, end: cursorPosition }],
+					cursorPosition + 1,
+					cursorPosition + 1,
+					0
+				]
 			break
 		case ";":
 			if (type !== 0)
-				return [[...command, { type: type, start: startPoint, end: cursorPosition }], cursorPosition + 1,
-					cursorPosition, COMMENT]
+				return [
+					[...command, { type: type, start: startPoint, end: cursorPosition }],
+					cursorPosition + 1,
+					cursorPosition,
+					COMMENT
+				]
 			else
 				return [command, cursorPosition + 1, cursorPosition, COMMENT]
 		case "$":
