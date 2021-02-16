@@ -13,6 +13,7 @@ lda label
 const COMMENT = 1
 const INSTRUCTION = 2
 const VALUE = 3
+const LABEL = 4
 
 const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0, type = 0) => {
 	switch (asmSource[cursorPosition]) {
@@ -47,6 +48,15 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 		case "%":
 			if (type === 0)
 				return [command, cursorPosition + 1, cursorPosition, VALUE]
+			break
+		case ":":
+			if (type === INSTRUCTION)
+				return [
+					[...command, { type: LABEL, start: startPoint, end: cursorPosition + 1 }],
+					cursorPosition + 1,
+					cursorPosition + 1,
+					0
+				]
 			break
 		default:
 			if (type === 0)
