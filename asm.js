@@ -5,7 +5,7 @@ const foo = `
 org $0800;comment1
 label:
 lda #16
-sta $01 ;comment2
+sta $01 ;comme nt2
 lda label
 ;comment3
 `
@@ -20,30 +20,24 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 	switch (asmSource[cursorPosition]) {
 		case "\n":
 			return [
-				[...command, { type: type, start: startPoint, end: cursorPosition }],
-				nextCursorPosition,
-				cursorPosition,
-				0
-			]
+				[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
 		case " ":
-			if (type > COMMENT)
-				return [
-					[...command, { type: type, start: startPoint, end: cursorPosition }],
-					nextCursorPosition,
-					nextCursorPosition,
-					0
-				]
-			break
+			if (type === COMMENT)
+				return [command, nextCursorPosition, startPoint, type]
+			else
+				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
 		case ";":
-			if (type !== 0)
+			if (type === 0)
+				return [command, nextCursorPosition, cursorPosition, COMMENT]
+			else if (type === COMMENT)
+				return [command, nextCursorPosition, startPoint, type]
+			else
 				return [
 					[...command, { type: type, start: startPoint, end: cursorPosition }],
 					nextCursorPosition,
 					cursorPosition,
 					COMMENT
 				]
-			else
-				return [command, nextCursorPosition, cursorPosition, COMMENT]
 		case "$":
 		case "#":
 		case "%":
@@ -55,8 +49,7 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 				return [
 					[...command, { type: LABEL, start: startPoint, end: nextCursorPosition }],
 					nextCursorPosition,
-					nextCursorPosition,
-					0
+					nextCursorPosition
 				]
 			break
 		default:
