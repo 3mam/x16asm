@@ -16,11 +16,12 @@ const VALUE = 3
 const LABEL = 4
 
 const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0, type = 0) => {
+	const nextCursorPosition = cursorPosition + 1
 	switch (asmSource[cursorPosition]) {
 		case "\n":
 			return [
 				[...command, { type: type, start: startPoint, end: cursorPosition }],
-				cursorPosition + 1,
+				nextCursorPosition,
 				cursorPosition,
 				0
 			]
@@ -28,8 +29,8 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 			if (type > COMMENT)
 				return [
 					[...command, { type: type, start: startPoint, end: cursorPosition }],
-					cursorPosition + 1,
-					cursorPosition + 1,
+					nextCursorPosition,
+					nextCursorPosition,
 					0
 				]
 			break
@@ -37,36 +38,36 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 			if (type !== 0)
 				return [
 					[...command, { type: type, start: startPoint, end: cursorPosition }],
-					cursorPosition + 1,
+					nextCursorPosition,
 					cursorPosition,
 					COMMENT
 				]
 			else
-				return [command, cursorPosition + 1, cursorPosition, COMMENT]
+				return [command, nextCursorPosition, cursorPosition, COMMENT]
 		case "$":
 		case "#":
 		case "%":
 			if (type === 0)
-				return [command, cursorPosition + 1, cursorPosition, VALUE]
+				return [command, nextCursorPosition, cursorPosition, VALUE]
 			break
 		case ":":
 			if (type === INSTRUCTION)
 				return [
-					[...command, { type: LABEL, start: startPoint, end: cursorPosition + 1 }],
-					cursorPosition + 1,
-					cursorPosition + 1,
+					[...command, { type: LABEL, start: startPoint, end: nextCursorPosition }],
+					nextCursorPosition,
+					nextCursorPosition,
 					0
 				]
 			break
 		default:
 			if (type === 0)
-				return [command, cursorPosition + 1, cursorPosition, INSTRUCTION]
+				return [command, nextCursorPosition, cursorPosition, INSTRUCTION]
 	}
 
 	if (asmSource.length <= cursorPosition)
 		throw command
 
-	return [command, cursorPosition + 1, startPoint, type]
+	return [command, nextCursorPosition, startPoint, type]
 
 }
 
