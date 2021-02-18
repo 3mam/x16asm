@@ -2,6 +2,7 @@ import { recursion } from "./tools.js"
 
 
 const foo = `
+include "foo";comment0
 org $0800;comment1
 label:
 lda #16
@@ -41,6 +42,7 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 		case "$":
 		case "#":
 		case "%":
+		case "\"":
 			if (type === 0)
 				return [command, nextCursorPosition, cursorPosition, VALUE]
 			break
