@@ -2,7 +2,8 @@ import { recursion } from "./tools.js"
 
 
 const foo = `
-include "foo";comment0
+CONST =#12
+include "foo" ;comment=
 org $0800;comment1
 label:
 lda #16
@@ -15,55 +16,54 @@ const COMMENT = 1
 const INSTRUCTION = 2
 const VALUE = 3
 const LABEL = 4
+const CONST = 5
+
+const mapEditLastCommand = (v, i, a) => i === a.length - 1 ? { type: CONST, start: v.start, end: v.end } : v
 
 const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0, type = 0) => {
+	if (asmSource.length <= cursorPosition)
+		throw command
+
 	const nextCursorPosition = cursorPosition + 1
-	switch (asmSource[cursorPosition]) {
-		case "\n":
-			return [
-				[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
-		case " ":
-			if (type === COMMENT)
-				return [command, nextCursorPosition, startPoint, type]
-			else
+	const char = asmSource[cursorPosition]
+
+	switch (type) {
+		case COMMENT:
+			if (char === "\n")
 				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
-		case ";":
-			if (type === 0)
-				return [command, nextCursorPosition, cursorPosition, COMMENT]
-			else if (type === COMMENT)
-				return [command, nextCursorPosition, startPoint, type]
 			else
-				return [
-					[...command, { type: type, start: startPoint, end: cursorPosition }],
-					nextCursorPosition,
-					cursorPosition,
-					COMMENT
-				]
+				return [command, nextCursorPosition, startPoint, type]
+		case VALUE:
+			if (char === "\n" || char === " " || char === ";")
+				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
+			else
+				return [command, nextCursorPosition, startPoint, type]
+		case INSTRUCTION:
+			if (char === " ")
+				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
+			else if (char === ":")
+				return [[...command, { type: LABEL, start: startPoint, end: cursorPosition }], nextCursorPosition]
+			else
+				return [command, nextCursorPosition, startPoint, type]
+		case CONST:
+			return [command.map(mapEditLastCommand), cursorPosition]
+	}
+
+	switch (char) {
+		case "\n":
+			return [command, nextCursorPosition]
+		case ";":
+			return [command, nextCursorPosition, cursorPosition, COMMENT]
+		case "=":
+			return [command, nextCursorPosition, cursorPosition, CONST]
 		case "$":
 		case "#":
 		case "%":
 		case "\"":
-			if (type === 0)
-				return [command, nextCursorPosition, cursorPosition, VALUE]
-			break
-		case ":":
-			if (type === INSTRUCTION)
-				return [
-					[...command, { type: LABEL, start: startPoint, end: nextCursorPosition }],
-					nextCursorPosition,
-					nextCursorPosition
-				]
-			break
+			return [command, nextCursorPosition, cursorPosition, VALUE]
 		default:
-			if (type === 0)
-				return [command, nextCursorPosition, cursorPosition, INSTRUCTION]
+			return [command, nextCursorPosition, cursorPosition, INSTRUCTION]
 	}
-
-	if (asmSource.length <= cursorPosition)
-		throw command
-
-	return [command, nextCursorPosition, startPoint, type]
-
 }
 
 const codeToLowerCase = foo.toLowerCase()
