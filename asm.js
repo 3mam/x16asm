@@ -10,6 +10,7 @@ lda #16
 sta $01 ;comme nt2
 lda label
 ;comment3
+sta $02 ;comme nt2
 `
 
 const COMMENT = 1
@@ -34,12 +35,8 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 			else
 				return [command, nextCursorPosition, startPoint, type]
 		case VALUE:
-			if (char === "\n" || char === " " || char === ";")
-				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
-			else
-				return [command, nextCursorPosition, startPoint, type]
 		case INSTRUCTION:
-			if (char === " ")
+			if (char === "\n" || char === " " || char === ";")
 				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
 			else if (char === ":")
 				return [[...command, { type: LABEL, start: startPoint, end: cursorPosition }], nextCursorPosition]
