@@ -2,6 +2,7 @@ import { recursion } from "./tools.js"
 
 
 const foo = `
+foo: .db 43,23,54
 CONST =#12
 include "foo" ;comment=
 org $0800;comment1
@@ -11,6 +12,7 @@ sta $01 ;comme nt2
 lda label
 ;comment3
 sta $02 ;comme nt2
+lda #<label
 `
 
 const COMMENT = 1
@@ -18,6 +20,7 @@ const INSTRUCTION = 2
 const VALUE = 3
 const LABEL = 4
 const CONST = 5
+const FUNCTION = 6
 
 const mapEditLastCommand = (v, i, a) => i === a.length - 1 ? { type: CONST, start: v.start, end: v.end } : v
 
@@ -36,6 +39,7 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 				return [command, nextCursorPosition, startPoint, type]
 		case VALUE:
 		case INSTRUCTION:
+		case FUNCTION:
 			if (char === "\n" || char === " " || char === ";")
 				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
 			else if (char === ":")
@@ -48,6 +52,8 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 
 	switch (char) {
 		case "\n":
+		case " ":
+		case "\t":
 			return [command, nextCursorPosition]
 		case ";":
 			return [command, nextCursorPosition, cursorPosition, COMMENT]
@@ -58,6 +64,8 @@ const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0,
 		case "%":
 		case "\"":
 			return [command, nextCursorPosition, cursorPosition, VALUE]
+		case ".":
+			return [command, nextCursorPosition, cursorPosition, FUNCTION]
 		default:
 			return [command, nextCursorPosition, cursorPosition, INSTRUCTION]
 	}
