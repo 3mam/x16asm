@@ -22,22 +22,20 @@ const FUNCTION = 6
 
 const mapEditLastCommandForConst = (v, i, a) => i === a.length - 1 ? { type: CONST, start: v.start, end: v.end } : v
 
-const reduceParseAsm = ({ commands = [], startPoint = 0, type = 0 }, char, cursorPosition) => {
-	const nextCursorPosition = cursorPosition + 1
-
+const reduceParseAsm = ({ commands = [], type = 0, startPoint = 0}, char, cursorPosition) => {
 	switch (type) {
 		case COMMENT:
 			if (char === "\n")
-				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }], nextCursorPosition }
+				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }] }
 			else
-				return { commands, nextCursorPosition, startPoint, type }
+				return { commands, type, startPoint}
 		case VALUE:
 		case INSTRUCTION:
 		case FUNCTION:
 			if (char === "\n" || char === " " || char === ";")
-				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }], nextCursorPosition }
+				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }] }
 			else if (char === ":")
-				return { commands: [...commands, { type: LABEL, start: startPoint, end: cursorPosition }], nextCursorPosition }
+				return { commands: [...commands, { type: LABEL, start: startPoint, end: cursorPosition }] }
 			else
 				return { commands, type, startPoint }
 	}
