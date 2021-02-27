@@ -3,7 +3,7 @@ import { recursion } from "./tools.js"
 
 const foo = `
 foo: .db 43,23,54
-CONST =#12
+CONST = #12
 include "foo" ;comment=
 org $0800;comment1
 label:
@@ -22,58 +22,51 @@ const LABEL = 4
 const CONST = 5
 const FUNCTION = 6
 
-const mapEditLastCommand = (v, i, a) => i === a.length - 1 ? { type: CONST, start: v.start, end: v.end } : v
+const mapEditLastCommandForConst = (v, i, a) => i === a.length - 1 ? { type: CONST, start: v.start, end: v.end } : v
 
-const parseAsm = asmSource => (command = [], cursorPosition = 0, startPoint = 0, type = 0) => {
-	if (asmSource.length <= cursorPosition)
-		throw command
-
+const reduceParseAsm = ({ commands = [], startPoint = 0, type = 0 }, char, cursorPosition, array) => {
 	const nextCursorPosition = cursorPosition + 1
-	const char = asmSource[cursorPosition]
 
 	switch (type) {
 		case COMMENT:
 			if (char === "\n")
-				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
+				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }], nextCursorPosition }
 			else
-				return [command, nextCursorPosition, startPoint, type]
+				return { commands, nextCursorPosition, startPoint, type }
 		case VALUE:
 		case INSTRUCTION:
 		case FUNCTION:
 			if (char === "\n" || char === " " || char === ";")
-				return [[...command, { type: type, start: startPoint, end: cursorPosition }], nextCursorPosition]
+				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }], nextCursorPosition }
 			else if (char === ":")
-				return [[...command, { type: LABEL, start: startPoint, end: cursorPosition }], nextCursorPosition]
+				return { commands: [...commands, { type: LABEL, start: startPoint, end: cursorPosition }], nextCursorPosition }
 			else
-				return [command, nextCursorPosition, startPoint, type]
-		case CONST:
-			return [command.map(mapEditLastCommand), cursorPosition]
+				return { commands, type, startPoint }
 	}
 
 	switch (char) {
 		case "\n":
 		case " ":
 		case "\t":
-			return [command, nextCursorPosition]
+			return { commands, type, startPoint }
 		case ";":
-			return [command, nextCursorPosition, cursorPosition, COMMENT]
+			return { commands, type: COMMENT, startPoint: cursorPosition }
 		case "=":
-			return [command, nextCursorPosition, cursorPosition, CONST]
+			return { commands: commands.map(mapEditLastCommandForConst) }
 		case "$":
 		case "#":
 		case "%":
 		case "\"":
-			return [command, nextCursorPosition, cursorPosition, VALUE]
+			return { commands, type: VALUE, startPoint: cursorPosition }
 		case ".":
-			return [command, nextCursorPosition, cursorPosition, FUNCTION]
+			return { commands, type: FUNCTION, startPoint: cursorPosition }
 		default:
-			return [command, nextCursorPosition, cursorPosition, INSTRUCTION]
+			return { commands, type: INSTRUCTION, startPoint: cursorPosition }
 	}
 }
 
 const codeToLowerCase = foo.toLowerCase()
-const ob = recursion(parseAsm(codeToLowerCase))()
-ob.forEach(el => {
+const test = Array.from(codeToLowerCase).reduce(reduceParseAsm, 0)
+test.commands.forEach(el => {
 	console.log(foo.substring(el.start, el.end), el)
 })
-
