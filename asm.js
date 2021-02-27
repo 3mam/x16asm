@@ -1,5 +1,3 @@
-import { recursion } from "./tools.js"
-
 
 const foo = `
 foo: .db 43,23,54
@@ -24,7 +22,7 @@ const FUNCTION = 6
 
 const mapEditLastCommandForConst = (v, i, a) => i === a.length - 1 ? { type: CONST, start: v.start, end: v.end } : v
 
-const reduceParseAsm = ({ commands = [], startPoint = 0, type = 0 }, char, cursorPosition, array) => {
+const reduceParseAsm = ({ commands = [], startPoint = 0, type = 0 }, char, cursorPosition) => {
 	const nextCursorPosition = cursorPosition + 1
 
 	switch (type) {
