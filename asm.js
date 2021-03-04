@@ -56,9 +56,6 @@ const reduceParser = ({ data = [], line = 1, start = 0, column = 0, ignore = fal
 		else
 			return { data: [...data, { instruction: str, line, column: start }], line, column: column + 1 }
 	else if (char === '\"' || char === ',')
-		if (disable)
-			return { data, line, start, column, str: str + char, disable }
-		else
 			return { data, line, start, column, str: str + char, disable: true }
 	else
 		if (start === 0)
