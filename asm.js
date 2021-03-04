@@ -1,17 +1,19 @@
 
 const foo = `
 foo: .db 43,23,54
+			.db "asd asd"
 CONST = #12
 include "foo" ;comment=
 org $0800;comment1
 label:
 lda #16
 sta #%11 ;comme nt2
-lda label
+ lda   label
 ;comment3
-sta $02 ;comme nt2
+	sta	$02 ;comme nt2
 lda #<label
 lda #$0800
+;bla bla bla
 `
 
 //command types 
@@ -33,46 +35,36 @@ const INDIRECT_X = 13
 const INDIRECT_Y = 14
 const IND_ZERO_PAGE = 15
 
-
-const mapEditLastCommandForConst = (v, i, a) => i === a.length - 1 ? { type: CONST, start: v.start, end: v.end } : v
-
-const reduceParseAsm = ({ commands = [], type = 0, startPoint = 0 }, char, cursorPosition) => {
-	switch (type) {
-		case COMMENT:
-			if (char === "\n")
-				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }] }
-			else
-				return { commands, type, startPoint }
-		case VALUE:
-		case INSTRUCTION:
-		case FUNCTION:
-			if (char === "\n" || char === " " || char === ";")
-				return { commands: [...commands, { type, start: startPoint, end: cursorPosition }] }
-			else if (char === ":")
-				return { commands: [...commands, { type: LABEL, start: startPoint, end: cursorPosition + 1 }] }
-			else
-				return { commands, type, startPoint }
-	}
-
-	switch (char) {
-		case "\n":
-		case " ":
-		case "\t":
-			return { commands, type, startPoint }
-		case ";":
-			return { commands, type: COMMENT, startPoint: cursorPosition }
-		case "=":
-			return { commands: commands.map(mapEditLastCommandForConst) }
-		case "$":
-		case "#":
-		case "%":
-		case "\"":
-			return { commands, type: VALUE, startPoint: cursorPosition }
-		case ".":
-			return { commands, type: FUNCTION, startPoint: cursorPosition }
-		default:
-			return { commands, type: INSTRUCTION, startPoint: cursorPosition }
-	}
+const reduceParser = ({ data = [], line = 1, start = 0, column = 0, ignore = false, str = "", disable = false }, char) => {
+	if (char === '\n')
+		if (str === '')
+			return { data, line: line + 1 }
+		else
+			return { data: [...data, { instruction: str, line, column: start }], line: line + 1 }
+	else if (char === ';')
+		return { data, line, start, column: column + 1, ignore: true, str }
+	else if (ignore)
+		return { data, line, start, column: column + 1, ignore, str }
+	else if (char === ' ' && !disable)
+		if (str === '')
+			return { data, line, start, column: column + 2, disable }
+		else
+			return { data: [...data, { instruction: str, line, column: start }], line, column: column + 2 }
+	else if (char === '\t')
+		if (str === '')
+			return { data, line, start, column: column + 3 }
+		else
+			return { data: [...data, { instruction: str, line, column: start }], line, column: column + 1 }
+	else if (char === '\"' || char === ',')
+		if (disable)
+			return { data, line, start, column, str: str + char, disable }
+		else
+			return { data, line, start, column, str: str + char, disable: true }
+	else
+		if (start === 0)
+			return { data, line, start: column, column: column + 1, str: str + char, disable }
+		else
+			return { data, line, start, column: column + 1, str: str + char, disable }
 }
 
 const valueToArray = (val) => {
@@ -118,14 +110,9 @@ const recognizeValueFromStr = (str) => {
 	}
 }
 
-const recognizeInstructionFromStr = (str, instructionList) => {
-	const instruction = instructionList[str]
-	const flags = ZERO_PAGE | ZERO_PAGE_X
-	console.log("ZZ", (ZERO_PAGE & flags) === ZERO_PAGE)
-	console.log(instruction)
-	console.log(instruction)
 
-}
+
+const filterGetLabels = (command) => command.type === LABEL
 
 const compilerInstructions = {
 	"org": {
@@ -134,18 +121,10 @@ const compilerInstructions = {
 }
 
 const instructionsFile = Deno.readTextFileSync("65c02.json")
-const instructions = JSON.parse(instructionsFile)
+const instructions = { ...JSON.parse(instructionsFile), ...compilerInstructions }
 
-const codeToLowerCase = foo.toLowerCase()
-const test = Array.from(codeToLowerCase).reduce(reduceParseAsm, 0)
-test.commands.forEach(el => {
-	if (el.type === VALUE) {
-		console.log(foo.substring(el.start, el.end), el)
-		const r = recognizeValueFromStr(foo.substring(el.start, el.end))
-		console.log(r)
-	} else if (el.type === INSTRUCTION) {
-		console.log(foo.substring(el.start, el.end), el)
-		const i = recognizeInstructionFromStr(foo.substring(el.start, el.end), instructions)
+const parseCode = Array.from(foo)
+	.reduce(reduceParser, 0)
 
-	}
-})
+
+console.log(parseCode)
