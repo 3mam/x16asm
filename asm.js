@@ -34,32 +34,6 @@ const strBinaryToValue = str => parseInt(str.substring(2), 2)
 const strHexToValue = str => parseInt(str.substring(2), 16)
 const strNumberToValue = str => parseInt(str.substring(1), 10)
 
-const recognizeValueFromStr = (str) => {
-	const firstChar = str[0]
-	if (firstChar === "#") {
-		const secondChar = str[1]
-		const addressMode = IMMEDIATE
-		switch (secondChar) {
-			case "%":
-				return { addressMode, value: strBinaryToValue(str) }
-			case "$":
-				return { addressMode, value: strHexToValue(str) }
-			case "<":
-			case ">":
-			case "^":
-				return { addressMode, value: str.substring(1) }
-			default:
-				return { addressMode, value: strNumberToValue(str) }
-		}
-	} else if (firstChar === "$") {
-		const value = strHexToValue(str)
-		if (value <= 255)
-			return { addressMode: ZERO_PAGE, value }
-		else
-			return { addressMode: ABSOLUTE, value }
-	}
-}
-
 const mapSplitToPeaces = (line, lineNumber) =>
 	line.reduce(
 		({ obj = [], str = "", column = 1, ignore = false, skip = false, quotEnd = '' }, char, index, array) => {
@@ -103,8 +77,6 @@ const parse = (codeString) => {
 
 	console.log(splitToPeaces)
 }
-
-const filterGetLabels = (command) => command.type === LABEL
 
 const compilerInstructions = {
 	"org": {
