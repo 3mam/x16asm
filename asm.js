@@ -1,21 +1,3 @@
-
-const foo = `
-foo: .db 43,23,54
-			.db "asd asd"
-CONST = #12
-include "foo" ;comment=
-org $0800;comment1
-label:
-lda #16
-sta #%11 ;comme nt2
- lda   label
-;comment3
-	sta	$02 ;comme nt2
-lda #<label
-lda #$0800
-;bla bla bla
-`
-
 //command types 
 const COMMENT = 1
 const INSTRUCTION = 2
@@ -34,35 +16,6 @@ const ZERO_PAGE_X = 12
 const INDIRECT_X = 13
 const INDIRECT_Y = 14
 const IND_ZERO_PAGE = 15
-
-const reduceParser = ({ data = [], line = 1, start = 0, column = 0, ignore = false, str = "", disable = false }, char) => {
-	if (char === '\n')
-		if (str === '')
-			return { data, line: line + 1 }
-		else
-			return { data: [...data, { instruction: str, line, column: start }], line: line + 1 }
-	else if (char === ';')
-		return { data, line, start, column: column + 1, ignore: true, str }
-	else if (ignore)
-		return { data, line, start, column: column + 1, ignore, str }
-	else if (char === ' ' && !disable)
-		if (str === '')
-			return { data, line, start, column: column + 2, disable }
-		else
-			return { data: [...data, { instruction: str, line, column: start }], line, column: column + 2 }
-	else if (char === '\t')
-		if (str === '')
-			return { data, line, start, column: column + 3 }
-		else
-			return { data: [...data, { instruction: str, line, column: start }], line, column: column + 1 }
-	else if (char === '\"' || char === ',')
-			return { data, line, start, column, str: str + char, disable: true }
-	else
-		if (start === 0)
-			return { data, line, start: column, column: column + 1, str: str + char, disable }
-		else
-			return { data, line, start, column: column + 1, str: str + char, disable }
-}
 
 const valueToArray = (val) => {
 	const byteSize = val > 255 ? 2 : 1
@@ -107,7 +60,49 @@ const recognizeValueFromStr = (str) => {
 	}
 }
 
+const mapSplitToPeaces = (line, lineNumber) =>
+	line.reduce(
+		({ obj = [], str = "", column = 1, ignore = false, skip = false, quotEnd = '' }, char, index, array) => {
+			const nextChar = array[index + 1]
+			const chars = [' ', '\t', '"', '=', '\n', ';']
+			const returnObj = { instruction: str + char, line: lineNumber + 1, column }
 
+			if (char === '\\' || char === ',')
+				return { obj, str: str + char, column, quotEnd, ignore, skip: true }
+
+			if (skip)
+				return { obj, str: str + char, column, quotEnd, ignore }
+
+			if (quotEnd === char)
+				return { obj: [...obj, returnObj], column: index + 2 }
+
+			if (char === '"')
+				return { obj, str: str + char, column, quotEnd: '"', ignore: true }
+
+			if (char === ';')
+				return { obj, str: str + char, column, quotEnd: '\n', ignore: true }
+
+			if (ignore)
+				return { obj, str: str + char, column, quotEnd, ignore }
+
+			if (chars.includes(char))
+				return { obj: [...obj, returnObj], column: char == '\t' ? index + 3 : index + 2 }
+
+			if (chars.includes(nextChar))
+				return { obj: [...obj, returnObj], column: char == '\t' ? index + 3 : index + 2 }
+
+			return { obj, str: str + char, column }
+
+		}, 0).obj
+
+const parse = (codeString) => {
+	const splitToLine = codeString.toLowerCase().split('\n').map(line => line + '\n')
+	const splitToPeaces = splitToLine
+		.map(element => Array.from(element))
+		.map(mapSplitToPeaces)
+
+	console.log(splitToPeaces)
+}
 
 const filterGetLabels = (command) => command.type === LABEL
 
@@ -120,8 +115,7 @@ const compilerInstructions = {
 const instructionsFile = Deno.readTextFileSync("65c02.json")
 const instructions = { ...JSON.parse(instructionsFile), ...compilerInstructions }
 
-const parseCode = Array.from(foo)
-	.reduce(reduceParser, 0)
+const sourceFile = Deno.readTextFileSync("test.asm")
 
+parse(sourceFile)
 
-console.log(parseCode)
