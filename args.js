@@ -10,28 +10,28 @@ const help = `
 -b binary type output (bin or prg(default))
 `
 
-const parserArgs = (argsArray, { fileName, output, preCompile, binaryType }, arrayPosition = 0) => {
+const parserArgs = (argsArray, { fileName, output, binaryType }, arrayPosition = 0) => {
 	const arrayNexPosition = arrayPosition + 1
 	const arg = argsArray[arrayPosition]
 	const nextArg = argsArray[arrayNexPosition]
 
 	if (arrayPosition >= argsArray.length)
-		throw { fileName, output, preCompile, binaryType }
+		throw { fileName, output, binaryType }
 	else
 		switch (arg) {
 			default:
-				return [argsArray, { "fileName": findFileName(arg), output, preCompile, binaryType }, arrayNexPosition]
+				return [argsArray, { "fileName": findFileName(arg), output, binaryType }, arrayNexPosition]
 			case "-o":
-				return [argsArray, { fileName, "output": nextArg, preCompile, binaryType }, arrayNexPosition + 1]
+				return [argsArray, { fileName, "output": nextArg, binaryType }, arrayNexPosition + 1]
 			case "-b":
-				return [argsArray, { fileName, output, preCompile, "binaryType": nextArg }, arrayNexPosition + 1]
+				return [argsArray, { fileName, output, "binaryType": nextArg }, arrayNexPosition + 1]
 			case "-h":
 				throw help
 		}
 }
 
-export function processArg(argsArray, { fileName, output, preCompile, binaryType }) {
-	const argsObject = recursion(parserArgs)(argsArray, { fileName, output, preCompile, binaryType })
+export function processArg({ fileName, output, preCompile, binaryType }) {
+	const argsObject = recursion(parserArgs)(Deno.args, { fileName, output, preCompile, binaryType })
 	if (typeof argsObject === "string") {
 		console.log(color.green(argsObject))
 		Deno.exit(0)
