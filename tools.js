@@ -1,10 +1,11 @@
 function objProtect(obj, fn) {
-	if (Array.isArray(obj))
-		return [...fn(obj)]
-	else if (typeof obj === 'object')
-		return { ...obj, ...fn(obj) }
+	const returnObj = fn(obj)
+	if (Array.isArray(returnObj))
+		return [...returnObj]
+	else if (typeof returnObj === 'object')
+		return { ...obj, ...returnObj }
 	else
-		return fn(obj)
+		return returnObj
 }
 
 function pipe(obj) {
