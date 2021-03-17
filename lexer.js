@@ -1,19 +1,22 @@
-import { tokensFromCode } from './tokenizer.js'
+import { cpuInstructions } from './instructions.js'
 
-const UNKNOWN = 0
-const COMMENT = 1
-const SPACE = 2
-const TAB = 3
-const LABEL = 4
-const FUNCTION = 5
-const STRING = 6
-const VALUE = 7
-const EQUAL = 8
-const NEWLINE = 9
-const LABEL_VALUE = 10
-const CONST = 11
-const NUMBER = 12
-const HEX_VALUE = 13
+export const types = Object.freeze({
+	UNKNOWN: 0,
+	COMMENT: 1,
+	SPACE: 2,
+	TAB: 3,
+	LABEL: 4,
+	FUNCTION: 5,
+	STRING: 6,
+	VALUE: 7,
+	EQUAL: 8,
+	NEWLINE: 9,
+	LABEL_VALUE: 10,
+	CONST: 11,
+	NUMBER: 12,
+	HEX_VALUE: 13,
+	INSTRUCTION: 14,
+})
 
 const isComment = ({ instruction }) => instruction[0] === ';' && instruction[instruction.length - 1] === '\n'
 const isSpace = ({ instruction }) => instruction === ' '
@@ -29,47 +32,54 @@ const isHexValue = ({ instruction }) => instruction[0] === '$'
 const isValue = ({ instruction }) => instruction[0] === '#'
 const isEqual = ({ instruction }) => instruction === '='
 const isNewLine = ({ instruction }) => instruction === '\n'
-const isTypeLabel = ({ type }) => type === LABEL
-const isTypeConst = ({ type }) => type === CONST
+const isTypeLabel = ({ type }) => type === types.LABEL
+const isTypeConst = ({ type }) => type === types.CONST
 
 const mapRecognitionTokensFirstStage = token => {
 	if (isComment(token))
-		return { ...token, type: COMMENT }
+		return { ...token, type: types.COMMENT }
 	else if (isSpace(token))
-		return { ...token, type: SPACE }
+		return { ...token, type: types.SPACE }
 	else if (isTab(token))
-		return { ...token, type: TAB }
+		return { ...token, type: types.TAB }
 	else if (isLabel(token))
-		return { ...token, type: LABEL }
+		return { ...token, type: types.LABEL }
 	else if (isFunction(token))
-		return { ...token, type: FUNCTION }
+		return { ...token, type: types.FUNCTION }
 	else if (isString(token))
-		return { ...token, type: STRING }
+		return { ...token, type: types.STRING }
 	else if (isValue(token))
-		return { ...token, type: VALUE }
+		return { ...token, type: types.VALUE }
 	else if (isEqual(token))
-		return { ...token, type: EQUAL }
+		return { ...token, type: types.EQUAL }
 	else if (isNewLine(token))
-		return { ...token, type: NEWLINE }
+		return { ...token, type: types.NEWLINE }
 	else if (isNumber(token))
-		return { ...token, type: NUMBER }
+		return { ...token, type: types.NUMBER }
 	else if (isHexValue(token))
-		return { ...token, type: HEX_VALUE }
+		return { ...token, type: types.HEX_VALUE }
 	else
-		return { ...token, type: UNKNOWN }
+		return { ...token, type: types.UNKNOWN }
 }
 
-const mapRecognitionConstToken = (token, index, array) => {
+const mapFindConstToken = (token, index, array) => {
 	const nextToken = array[index + 1]
-	if (token.type === UNKNOWN && nextToken.type === EQUAL)
-		return { ...token, type: CONST }
+	if (token.type === types.UNKNOWN && nextToken.type === types.EQUAL)
+		return { ...token, type: types.CONST }
 	else
 		return token
 }
 
-const mapFindLabelInValue = labelList => token => {
-	if (labelList.includes(token.instruction))
-		return { ...token, type: LABEL_VALUE }
+const mapFindLabelAndConstInValue = list => token => {
+	if (list.includes(token.instruction))
+		return { ...token, type: types.LABEL_VALUE }
+	else
+		return token
+}
+
+const mapFindCpuInstructionsInToken = cpuInstructions => token => {
+	if (typeof cpuInstructions[token.instruction] === 'object')
+		return { ...token, type: types.INSTRUCTION }
 	else
 		return token
 }
@@ -84,21 +94,22 @@ const reduceCollectLabelAndConst = (list, token) => {
 }
 
 const filterRemoveNotImportantTokens = ({ type }) => {
-	const typesToIgnore = [COMMENT, SPACE, TAB, NEWLINE]
+	const typesToIgnore = [types.COMMENT, types.SPACE, types.TAB, types.NEWLINE]
 	return !typesToIgnore.includes(type)
 }
 
-const filterRemoveEqualToken = ({ type }) => !(type === EQUAL)
+const filterRemoveEqualToken = ({ type }) => !(type === types.EQUAL)
 
-const sourceFile = Deno.readTextFileSync("test.asm")
 
-const tokens = tokensFromCode(sourceFile)
-const foo = tokens
-	.map(mapRecognitionTokensFirstStage)
-	.filter(filterRemoveNotImportantTokens)
-	.map(mapRecognitionConstToken)
-	.filter(filterRemoveEqualToken)
+export function lexer(tokens) {
+	const firstStage = tokens
+		.map(mapRecognitionTokensFirstStage)
+		.filter(filterRemoveNotImportantTokens)
+		.map(mapFindConstToken)
+		.filter(filterRemoveEqualToken)
+		.map(mapFindCpuInstructionsInToken(cpuInstructions))
 
-const labelAndConstList = foo.reduce(reduceCollectLabelAndConst, [])
-const foo2 = foo.map(mapFindLabelInValue(labelAndConstList))
-console.log(foo2)
+	const labelAndConstList = firstStage.reduce(reduceCollectLabelAndConst, [])
+	const secondStage = firstStage.map(mapFindLabelAndConstInValue(labelAndConstList))
+	return secondStage
+}

@@ -7,7 +7,6 @@ const checkIfHaveFileName = ({ fileName }) => fileName === null ? false : true
 const help = `
 -h this message
 -o output file
--p pre compile file
 -b binary type output (bin or prg(default))
 `
 
@@ -24,8 +23,6 @@ const parserArgs = (argsArray, { fileName, output, preCompile, binaryType }, arr
 				return [argsArray, { "fileName": findFileName(arg), output, preCompile, binaryType }, arrayNexPosition]
 			case "-o":
 				return [argsArray, { fileName, "output": nextArg, preCompile, binaryType }, arrayNexPosition + 1]
-			case "-p":
-				return [argsArray, { fileName, output, "preCompile": nextArg, binaryType }, arrayNexPosition + 1]
 			case "-b":
 				return [argsArray, { fileName, output, preCompile, "binaryType": nextArg }, arrayNexPosition + 1]
 			case "-h":
@@ -33,7 +30,7 @@ const parserArgs = (argsArray, { fileName, output, preCompile, binaryType }, arr
 		}
 }
 
-export const processArg = (argsArray, { fileName, output, preCompile, binaryType }) => {
+export function processArg(argsArray, { fileName, output, preCompile, binaryType }) {
 	const argsObject = recursion(parserArgs)(argsArray, { fileName, output, preCompile, binaryType })
 	if (typeof argsObject === "string") {
 		console.log(color.green(argsObject))

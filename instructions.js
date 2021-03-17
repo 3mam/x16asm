@@ -1,4 +1,4 @@
-export const instructions = {
+export const cpuInstructions = {
 	adc: {
 		immediate: 0x69,
 		zeroPage: 0x65,
