@@ -1,5 +1,5 @@
-import { processArg } from "./args.js"
-import * as color from "https://deno.land/std/fmt/colors.ts"
+import { processArg } from './args.js'
+import * as color from 'https://deno.land/std/fmt/colors.ts'
 import { piping } from './tools.js'
 import { tokensFromCode } from './tokenizer.js'
 import { lexer, types } from './lexer.js'
@@ -14,8 +14,8 @@ const loadAsmCode = ({ fileName }) => {
 
 const args = Deno.args
 const defaultSettings = {
-	"binaryType": "prg",
-	"fileName": null
+	'binaryType': 'prg',
+	'fileName': null
 }
 
 const tokens = piping(defaultSettings)
