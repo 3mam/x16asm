@@ -5,7 +5,7 @@ const mapSplitToPeaces = (line, lineNumber) =>
 			const chars = [' ', '\t', '"', '=', '\n', ';']
 			const returnObj = { instruction: str + char, line: lineNumber + 1, column }
 
-			if (char === '\\' || char === ',')
+			if (char === '\\')
 				return { obj, str: str + char, column, quotEnd, ignore, skip: true }
 
 			if (skip)
