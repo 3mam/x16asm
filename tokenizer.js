@@ -34,11 +34,9 @@ const mapSplitToPeaces = (line, lineNumber) =>
 		}, 0).obj
 
 export function tokensFromCode(codeString) {
-	const splitToLine = codeString
+	const splitToPeaces = codeString
 		.split('\n')
 		.map(line => line + '\n')
-
-	const splitToPeaces = splitToLine
 		.map(element => Array.from(element))
 		.map(mapSplitToPeaces)
 		.flat()
