@@ -1,8 +1,10 @@
+const isObject = val => typeof val === 'object'
+
 function objProtect(obj, fn) {
 	const returnObj = fn(obj)
 	if (Array.isArray(returnObj))
 		return [...returnObj]
-	else if (typeof returnObj === 'object')
+	else if (isObject(returnObj))
 		return { ...obj, ...returnObj }
 	else
 		return returnObj
@@ -17,11 +19,30 @@ function pipe(obj) {
 export const piping = obj => new pipe(obj)
 export const composition = (...fn) => val => fn.reduce((v, f) => f(v), val)
 
-export const recursion = func => (...variables) => {
+export const recursion = fn => (...variables) => {
 	try {
 		while (true)
-			variables = func(...variables)
+			variables = fn(...variables)
 	} catch (returnData) {
 		return returnData
+	}
+}
+
+export const lazy = fn => {
+	let obj
+	return () => {
+		obj = obj ?? fn()
+		return Object.freeze(obj)
+	}
+}
+
+export const memoize = fn => {
+	const mem = new Map()
+	return (...variable) => {
+		const val = JSON.stringify(variable)
+		if (mem.has(val))
+			return mem.get(val)
+		else
+			return mem.set(val, fn(...variable)).get(val)
 	}
 }
