@@ -26,70 +26,75 @@ export const types = Object.freeze({
 	Y: 22,
 })
 
-const isComment = ({ instruction }) => instruction[0] === ';' && instruction[instruction.length - 1] === '\n'
-const isSpace = ({ instruction }) => instruction === ' '
-const isTab = ({ instruction }) => instruction === '\t'
-const isLabel = ({ instruction }) => instruction[instruction.length - 1] === ':'
-const isFunction = ({ instruction }) => instruction[0] === '.'
-const isString = ({ instruction }) => instruction[0] === '"' && instruction[instruction.length - 1] === '"'
-const isNumber = ({ instruction }) => {
-	const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
-	return chars.includes(instruction.toLowerCase()[0])
-}
-const isHexValue = ({ instruction }) => instruction[0] === '$'
-const isValue = ({ instruction }) => instruction[0] === '#'
-const isEqual = ({ instruction }) => instruction === '='
-const isNewLine = ({ instruction }) => instruction === '\n'
-const isBinValue = ({ instruction }) => instruction === '%'
-const isOpenBracket = ({ instruction }) => instruction === '('
-const isCloseBracket = ({ instruction }) => instruction === ')'
-const isComma = ({ instruction }) => instruction === ','
-const isLowByte = ({ instruction }) => instruction === '<'
-const isHiByte = ({ instruction }) => instruction === '>'
-const isX = ({ instruction }) => instruction.toLowerCase() === 'x'
-const isY = ({ instruction }) => instruction.toLowerCase() === 'y'
+const recognizeChars = ({ instruction }) => ({
+	isComment: () => instruction[0] === ';' && instruction[instruction.length - 1] === '\n',
+	isSpace: () => instruction === ' ',
+	isTab: () => instruction === '\t',
+	isLabel: () => instruction[instruction.length - 1] === ':',
+	isFunction: () => instruction[0] === '.',
+	isString: () => instruction[0] === '"' && instruction[instruction.length - 1] === '"',
+	isNumber: () => {
+		const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+		return chars.includes(instruction.toLowerCase()[0])
+	},
+	isHexValue: () => instruction[0] === '$',
+	isValue: () => instruction[0] === '#',
+	isEqual: () => instruction === '=',
+	isNewLine: () => instruction === '\n',
+	isBinValue: () => instruction === '%',
+	isOpenBracket: () => instruction === '(',
+	isCloseBracket: () => instruction === ')',
+	isComma: () => instruction === ',',
+	isLowByte: () => instruction === '<',
+	isHiByte: () => instruction === '>',
+	isX: () => instruction.toLowerCase() === 'x',
+	isY: () => instruction.toLowerCase() === 'y',
+})
 
-const isTypeLabel = ({ type }) => type === types.LABEL
-const isTypeConst = ({ type }) => type === types.CONST
+const recognizeType = ({ type }) => ({
+	isTypeLabel: () => type === types.LABEL,
+	isTypeConst: () => type === types.CONST,
+})
 
 const mapRecognitionTokensFirstStage = token => {
-	if (isComment(token))
+	const char = recognizeChars(token)
+	if (char.isComment())
 		return { ...token, type: types.COMMENT }
-	else if (isSpace(token))
+	else if (char.isSpace())
 		return { ...token, type: types.SPACE }
-	else if (isTab(token))
+	else if (char.isTab())
 		return { ...token, type: types.TAB }
-	else if (isLabel(token))
+	else if (char.isLabel())
 		return { ...token, type: types.LABEL }
-	else if (isFunction(token))
+	else if (char.isFunction())
 		return { ...token, type: types.FUNCTION }
-	else if (isString(token))
+	else if (char.isString())
 		return { ...token, type: types.STRING }
-	else if (isValue(token))
+	else if (char.isValue())
 		return { ...token, type: types.VALUE }
-	else if (isEqual(token))
+	else if (char.isEqual())
 		return { ...token, type: types.EQUAL }
-	else if (isNewLine(token))
+	else if (char.isNewLine())
 		return { ...token, type: types.NEWLINE }
-	else if (isNumber(token))
+	else if (char.isNumber())
 		return { ...token, type: types.NUMBER }
-	else if (isHexValue(token))
+	else if (char.isHexValue())
 		return { ...token, type: types.HEX_VALUE }
-	else if (isBinValue(token))
+	else if (char.isBinValue())
 		return { ...token, type: types.BIN_VALUE }
-	else if (isOpenBracket(token))
+	else if (char.isOpenBracket())
 		return { ...token, type: types.OPEN_BRACKET }
-	else if (isCloseBracket(token))
+	else if (char.isCloseBracket())
 		return { ...token, type: types.CLOSE_BRACKET }
-	else if (isComma(token))
+	else if (char.isComma())
 		return { ...token, type: types.COMMA }
-	else if (isLowByte(token))
+	else if (char.isLowByte())
 		return { ...token, type: types.LOW_BYTE }
-	else if (isHiByte(token))
+	else if (char.isHiByte())
 		return { ...token, type: types.HI_BYTE }
-	else if (isX(token))
+	else if (char.isX())
 		return { ...token, type: types.X }
-	else if (isY(token))
+	else if (char.isY())
 		return { ...token, type: types.Y }
 	else
 		return { ...token, type: types.UNKNOWN }
@@ -118,9 +123,10 @@ const mapFindCpuInstructionsInToken = cpuInstructions => token => {
 }
 
 const reduceCollectLabelAndConst = (list, token) => {
-	if (isTypeLabel(token))
+	const type = recognizeType(token)
+	if (type.isTypeLabel())
 		return [...list, token.instruction.substring(0, token.instruction.length - 1)]
-	else if (isTypeConst(token))
+	else if (type.isTypeConst())
 		return [...list, token.instruction]
 	else
 		return list

@@ -18,7 +18,7 @@ const error = ({ line, column }, errorMessage) => {
 const checkUnknown = ({ type, line, column }) =>
 	type === types.UNKNOWN && error({ line, column }, 'Unknown instruction')
 
-const instructionsIdentification = (tokens, index) => ({
+const recognizeInstructions = (tokens, index) => ({
 	isLabelIndirect: () =>
 		tokens[index]?.type === types.OPEN_BRACKET &&
 		tokens[index + 1]?.type === types.LABEL_VALUE &&
@@ -87,7 +87,7 @@ const strBinToValue = valueStrBin => split16to8bit(parseInt(valueStrBin, 2))
 const getAddressingTypeFromValueToken = (tokens, index = 0, newTokensList = []) => {
 	if (tokens.length <= index)
 		throw newTokensList
-	const instruction = instructionsIdentification(tokens, index)
+	const instruction = recognizeInstructions(tokens, index)
 	if (instruction.isLabelIndirectY())
 		return [tokens, index + 5, [...newTokensList,
 		{ value: tokens[index + 1].instruction, type: addressingType.INDIRECT_LABEL_Y }]]
