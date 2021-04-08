@@ -33,10 +33,7 @@ const recognizeChars = ({ instruction }) => ({
 	isLabel: () => instruction[instruction.length - 1] === ':',
 	isFunction: () => instruction[0] === '.',
 	isString: () => instruction[0] === '"' && instruction[instruction.length - 1] === '"',
-	isNumber: () => {
-		const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
-		return chars.includes(instruction.toLowerCase()[0])
-	},
+	isNumber: () => !isNaN(parseInt(instruction, 16)),
 	isHexValue: () => instruction[0] === '$',
 	isValue: () => instruction[0] === '#',
 	isEqual: () => instruction === '=',
