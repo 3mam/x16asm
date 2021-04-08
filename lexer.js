@@ -114,7 +114,7 @@ const mapFindLabelInValue = list => token => {
 }
 
 const mapFindConstInValue = list => token => {
-	if (list.includes(token.instruction))
+	if (list.includes(token.instruction) && token.type !== types.CONST)
 		return { ...token, type: types.CONST_VALUE }
 	else
 		return token
@@ -161,7 +161,8 @@ export function lexer(tokens) {
 
 	const labelList = firstStage.reduce(reduceCollectLabel, [])
 	const constList = firstStage.reduce(reduceCollectConst, [])
-	const secondStage = firstStage.map(mapFindLabelInValue(labelList))
-	const thirdStage = secondStage.map(mapFindConstInValue(constList))
-	return thirdStage
+	const secondStage = firstStage
+		.map(mapFindLabelInValue(labelList))
+		.map(mapFindConstInValue(constList))
+	return secondStage
 }
