@@ -1,31 +1,5 @@
 import { cpuInstructions } from './instructions.js'
-
-export const types = Object.freeze({
-	UNKNOWN: 0,
-	COMMENT: 1,
-	SPACE: 2,
-	TAB: 3,
-	LABEL: 4,
-	FUNCTION: 5,
-	STRING: 6,
-	VALUE: 7,
-	EQUAL: 8,
-	NEWLINE: 9,
-	LABEL_VALUE: 10,
-	CONST: 11,
-	NUMBER: 12,
-	HEX_VALUE: 13,
-	INSTRUCTION: 14,
-	BIN_VALUE: 15,
-	OPEN_BRACKET: 16,
-	CLOSE_BRACKET: 17,
-	COMMA: 18,
-	LOW_BYTE: 19,
-	HI_BYTE: 20,
-	X: 21,
-	Y: 22,
-	CONST_VALUE: 23,
-})
+import { types } from './enum.js'
 
 const recognizeChars = ({ instruction }) => ({
 	isComment: () => instruction[0] === ';' && instruction[instruction.length - 1] === '\n',
@@ -47,11 +21,6 @@ const recognizeChars = ({ instruction }) => ({
 	isHiByte: () => instruction === '>',
 	isX: () => instruction.toLowerCase() === 'x',
 	isY: () => instruction.toLowerCase() === 'y',
-})
-
-const recognizeType = ({ type }) => ({
-	isTypeLabel: () => type === types.LABEL,
-	isTypeConst: () => type === types.CONST,
 })
 
 const mapRecognitionTokensFirstStage = token => {
@@ -128,16 +97,14 @@ const mapFindCpuInstructionsInToken = cpuInstructions => token => {
 }
 
 const reduceCollectLabel = (list, token) => {
-	const type = recognizeType(token)
-	if (type.isTypeLabel())
+	if (token.type === types.LABEL)
 		return [...list, token.instruction.substring(0, token.instruction.length - 1)]
 	else
 		return list
 }
 
 const reduceCollectConst = (list, token) => {
-	const type = recognizeType(token)
-	if (type.isTypeConst())
+	if (token.type === types.CONST)
 		return [...list, token.instruction.substring(0, token.instruction.length)]
 	else
 		return list
