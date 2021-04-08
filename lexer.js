@@ -24,6 +24,7 @@ export const types = Object.freeze({
 	HI_BYTE: 20,
 	X: 21,
 	Y: 22,
+	CONST_VALUE: 23,
 })
 
 const recognizeChars = ({ instruction }) => ({
@@ -33,7 +34,7 @@ const recognizeChars = ({ instruction }) => ({
 	isLabel: () => instruction[instruction.length - 1] === ':',
 	isFunction: () => instruction[0] === '.',
 	isString: () => instruction[0] === '"' && instruction[instruction.length - 1] === '"',
-	isNumber: () => !isNaN(parseInt(instruction, 16)),
+	isNumber: () => /^[0-9a-f]+$/gim.test(instruction),
 	isHexValue: () => instruction[0] === '$',
 	isValue: () => instruction[0] === '#',
 	isEqual: () => instruction === '=',
@@ -99,15 +100,22 @@ const mapRecognitionTokensFirstStage = token => {
 
 const mapFindConstToken = (token, index, array) => {
 	const nextToken = array[index + 1]
-	if (token.type === types.UNKNOWN && nextToken.type === types.EQUAL)
+	if (token.type === types.UNKNOWN && nextToken?.type === types.EQUAL)
 		return { ...token, type: types.CONST }
 	else
 		return token
 }
 
-const mapFindLabelAndConstInValue = list => token => {
+const mapFindLabelInValue = list => token => {
 	if (list.includes(token.instruction))
 		return { ...token, type: types.LABEL_VALUE }
+	else
+		return token
+}
+
+const mapFindConstInValue = list => token => {
+	if (list.includes(token.instruction))
+		return { ...token, type: types.CONST_VALUE }
 	else
 		return token
 }
@@ -119,12 +127,18 @@ const mapFindCpuInstructionsInToken = cpuInstructions => token => {
 		return token
 }
 
-const reduceCollectLabelAndConst = (list, token) => {
+const reduceCollectLabel = (list, token) => {
 	const type = recognizeType(token)
 	if (type.isTypeLabel())
 		return [...list, token.instruction.substring(0, token.instruction.length - 1)]
-	else if (type.isTypeConst())
-		return [...list, token.instruction]
+	else
+		return list
+}
+
+const reduceCollectConst = (list, token) => {
+	const type = recognizeType(token)
+	if (type.isTypeConst())
+		return [...list, token.instruction.substring(0, token.instruction.length)]
 	else
 		return list
 }
@@ -145,7 +159,9 @@ export function lexer(tokens) {
 		.filter(filterRemoveEqualToken)
 		.map(mapFindCpuInstructionsInToken(cpuInstructions))
 
-	const labelAndConstList = firstStage.reduce(reduceCollectLabelAndConst, [])
-	const secondStage = firstStage.map(mapFindLabelAndConstInValue(labelAndConstList))
-	return secondStage
+	const labelList = firstStage.reduce(reduceCollectLabel, [])
+	const constList = firstStage.reduce(reduceCollectConst, [])
+	const secondStage = firstStage.map(mapFindLabelInValue(labelList))
+	const thirdStage = secondStage.map(mapFindConstInValue(constList))
+	return thirdStage
 }
