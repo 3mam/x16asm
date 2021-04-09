@@ -175,7 +175,7 @@ const recGetValueTypeFromToken = (tokens, index = 0, newTokensList = []) => {
 
 	else if (instruction.isHexValue())
 		return [tokens, index + 3, [...newTokensList,
-		{ value: (tokens[index + 2].instruction), type: valueType.IMMEDIATE }]]
+		{ value: strHexToValue(tokens[index + 2].instruction), type: valueType.IMMEDIATE }]]
 
 	else if (instruction.isBinValue())
 		return [tokens, index + 3, [...newTokensList,
@@ -218,20 +218,29 @@ const recGetValueTypeFromToken = (tokens, index = 0, newTokensList = []) => {
 	return [tokens, index + 1, [...newTokensList, tokens[index]]]
 }
 
-const recFindConstWithValue = (tokens, index = 0, newTokensList = []) => {
+const recConnectConstWithValue = (tokens, index = 0, newTokensList = []) => {
 	if (tokens.length <= index)
 		throw newTokensList
 
 	const token = tokens[index]
 	const nextToken = tokens[index + 1]
-	if (token.type === types.CONST && nextToken?.type === valueType.IMMEDIATE)
-		return [tokens, index + 2, [...newTokensList,
-		{ name: token.instruction, value: [...nextToken.value], type: valueType.CONST }]]
-	else
-		return [tokens, index + 1, [...newTokensList, tokens[index]]]
+	const value = [valueType.IMMEDIATE, valueType.ABSOLUTE, valueType.ZERO_PAGE]
+	if (token.type === types.CONST)
+		if (value.includes(nextToken?.type))
+			return [tokens, index + 2, [...newTokensList,
+			{ name: token.instruction, value: [...nextToken.value], type: valueType.CONST }]]
+		else
+			return [tokens, index + 2, [...newTokensList,
+			{ name: token.instruction, value: null, type: -1 }]]
+
+	return [tokens, index + 1, [...newTokensList, tokens[index]]]
 }
 
 const recReplaceConsToValueType = constList => (tokens, index = 0, newTokensList = []) => {
+
+	if (constList.length === 0)
+		throw tokens
+		
 	if (tokens.length <= index)
 		throw newTokensList
 
@@ -289,7 +298,7 @@ const reduceRemoveConst = (list, token) => token.type === valueType.CONST ? list
 export function checkErrors(tokens) {
 	const recognizeValue = piping(tokens)
 		.pipe(recursion(recGetValueTypeFromToken))
-		.pipe(recursion(recFindConstWithValue))
+		.pipe(recursion(recConnectConstWithValue))
 		.valueOf()
 
 	const constList = recognizeValue.reduce(reduceCollectConst, [])
