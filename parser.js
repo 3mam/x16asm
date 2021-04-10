@@ -1,5 +1,6 @@
 import { recursion, piping } from './tools.js'
-import { valueType, types } from './enum.js'
+import { valueTypes, types } from './enum.js'
+import { cpuInstructions } from './instructions.js'
 
 const error = ({ line, column }, errorMessage) => {
 	throw `${errorMessage} in line ${line} column ${column}`
@@ -149,71 +150,71 @@ const recGetValueTypeFromToken = (tokens, index = 0, newTokensList = []) => {
 
 	if (instruction.isLabelIndirectY())
 		return [tokens, index + 5, [...newTokensList,
-		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueType.LABEL_INDIRECT_Y }]]
+		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueTypes.LABEL_INDIRECT_Y }]]
 
 	else if (instruction.isLabelIndirectX())
 		return [tokens, index + 5, [...newTokensList,
-		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueType.LABEL_INDIRECT_X }]]
+		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueTypes.LABEL_INDIRECT_X }]]
 
 	else if (instruction.isLabelIndirect())
 		return [tokens, index + 3, [...newTokensList,
-		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueType.LABEL_INDIRECT }]]
+		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueTypes.LABEL_INDIRECT }]]
 
 	else if (instruction.isIndirectY())
 		return [tokens, index + 6, [...newTokensList,
-		{ value: strHexToValue(tokens[index + 2].instruction), type: valueType.INDIRECT_Y }]]
+		{ value: strHexToValue(tokens[index + 2].instruction), type: valueTypes.INDIRECT_Y }]]
 
 	else if (instruction.isIndirectX())
 		return [tokens, index + 6, [...newTokensList,
-		{ value: strHexToValue(tokens[index + 2].instruction), type: valueType.INDIRECT_X }]]
+		{ value: strHexToValue(tokens[index + 2].instruction), type: valueTypes.INDIRECT_X }]]
 
 	else if (instruction.isIndirect()) {
 		const val = strHexToValue(tokens[index + 2].instruction)
 		return [tokens, index + 4, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueType.IND_ZERO_PAGE : valueType.INDIRECT }]]
+		{ value: val, type: val <= 255 ? valueTypes.IND_ZERO_PAGE : valueTypes.INDIRECT }]]
 	}
 
 	else if (instruction.isHexValue())
 		return [tokens, index + 3, [...newTokensList,
-		{ value: strHexToValue(tokens[index + 2].instruction), type: valueType.IMMEDIATE }]]
+		{ value: strHexToValue(tokens[index + 2].instruction), type: valueTypes.IMMEDIATE }]]
 
 	else if (instruction.isBinValue())
 		return [tokens, index + 3, [...newTokensList,
-		{ value: strBinToValue(tokens[index + 2].instruction), type: valueType.IMMEDIATE }]]
+		{ value: strBinToValue(tokens[index + 2].instruction), type: valueTypes.IMMEDIATE }]]
 
 	else if (instruction.isValue())
 		return [tokens, index + 2, [...newTokensList,
-		{ value: strDcmToValue(tokens[index + 1].instruction), type: valueType.IMMEDIATE }]]
+		{ value: strDcmToValue(tokens[index + 1].instruction), type: valueTypes.IMMEDIATE }]]
 
 	else if (instruction.isHexAddress()) {
 		const val = strHexToValue(tokens[index + 1].instruction)
 		return [tokens, index + 2, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueType.ZERO_PAGE : valueType.ABSOLUTE }]]
+		{ value: val, type: val <= 255 ? valueTypes.ZERO_PAGE : valueTypes.ABSOLUTE }]]
 	}
 
 	else if (instruction.isHexAddressX()) {
 		const val = strHexToValue(tokens[index + 1].instruction)
 		return [tokens, index + 4, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueType.ZERO_PAGE_X : valueType.ABSOLUTE_X }]]
+		{ value: val, type: val <= 255 ? valueTypes.ZERO_PAGE_X : valueTypes.ABSOLUTE_X }]]
 	}
 
 	else if (instruction.isHexAddressY()) {
 		const val = strHexToValue(tokens[index + 1].instruction)
 		return [tokens, index + 4, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueType.ZERO_PAGE_Y : valueType.ABSOLUTE_Y }]]
+		{ value: val, type: val <= 255 ? valueTypes.ZERO_PAGE_Y : valueTypes.ABSOLUTE_Y }]]
 	}
 
 	else if (instruction.isAbsoluteLabel())
 		return [tokens, index + 1, [...newTokensList,
-		{ name: tokens[index].instruction, value: [0, 0], type: valueType.LABEL_ABSOLUTE }]]
+		{ name: tokens[index].instruction, value: [0, 0], type: valueTypes.LABEL_ABSOLUTE }]]
 
 	else if (instruction.isAbsoluteLabelX())
 		return [tokens, index + 3, [...newTokensList,
-		{ name: tokens[index].instruction, value: [0, 0], type: valueType.LABEL_ABSOLUTE_X }]]
+		{ name: tokens[index].instruction, value: [0, 0], type: valueTypes.LABEL_ABSOLUTE_X }]]
 
 	else if (instruction.isAbsoluteLabelY())
 		return [tokens, index + 3, [...newTokensList,
-		{ name: tokens[index].instruction, value: [0, 0], type: valueType.LABEL_ABSOLUTE_Y }]]
+		{ name: tokens[index].instruction, value: [0, 0], type: valueTypes.LABEL_ABSOLUTE_Y }]]
 
 	return [tokens, index + 1, [...newTokensList, tokens[index]]]
 }
@@ -224,11 +225,11 @@ const recConnectConstWithValue = (tokens, index = 0, newTokensList = []) => {
 
 	const token = tokens[index]
 	const nextToken = tokens[index + 1]
-	const value = [valueType.IMMEDIATE, valueType.ABSOLUTE, valueType.ZERO_PAGE]
+	const value = [valueTypes.IMMEDIATE, valueTypes.ABSOLUTE, valueTypes.ZERO_PAGE]
 	if (token.type === types.CONST)
 		if (value.includes(nextToken?.type))
 			return [tokens, index + 2, [...newTokensList,
-			{ name: token.instruction, value: [...nextToken.value], type: valueType.CONST }]]
+			{ name: token.instruction, value: [...nextToken.value], type: valueTypes.CONST }]]
 		else
 			return [tokens, index + 2, [...newTokensList,
 			{ name: token.instruction, value: null, type: -1 }]]
@@ -240,7 +241,7 @@ const recReplaceConsToValueType = constList => (tokens, index = 0, newTokensList
 
 	if (constList.length === 0)
 		throw tokens
-		
+
 	if (tokens.length <= index)
 		throw newTokensList
 
@@ -249,53 +250,118 @@ const recReplaceConsToValueType = constList => (tokens, index = 0, newTokensList
 	if (cons.isIndirect()) {
 		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.instruction)
 		return [tokens, index + 3, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueType.INDIRECT : valueType.IND_ZERO_PAGE }]]
+		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.INDIRECT : valueTypes.IND_ZERO_PAGE }]]
 	}
 
 	else if (cons.isIndirectX()) {
 		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.instruction)
 		return [tokens, index + 5, [...newTokensList,
-		{ value: consToken.value, type: valueType.INDIRECT_X }]]
+		{ value: consToken.value, type: valueTypes.INDIRECT_X }]]
 	}
 
 	else if (cons.isIndirectY()) {
 		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.instruction)
 		return [tokens, index + 5, [...newTokensList,
-		{ value: consToken.value, type: valueType.INDIRECT_Y }]]
+		{ value: consToken.value, type: valueTypes.INDIRECT_Y }]]
 	}
 
 	else if (cons.isAbsolute()) {
 		const consToken = constList.find(obj => obj.name === tokens[index]?.instruction)
 		return [tokens, index + 1, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueType.ABSOLUTE : valueType.ZERO_PAGE }]]
+		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.ABSOLUTE : valueTypes.ZERO_PAGE }]]
 	}
 
 	else if (cons.isAbsoluteX()) {
 		const consToken = constList.find(obj => obj.name === tokens[index]?.instruction)
 		return [tokens, index + 3, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueType.ABSOLUTE_X : valueType.ZERO_PAGE_X }]]
+		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.ABSOLUTE_X : valueTypes.ZERO_PAGE_X }]]
 	}
 
 	else if (cons.isAbsoluteY()) {
 		const consToken = constList.find(obj => obj.name === tokens[index]?.instruction)
 		return [tokens, index + 3, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueType.ABSOLUTE_Y : valueType.ZERO_PAGE_Y }]]
+		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.ABSOLUTE_Y : valueTypes.ZERO_PAGE_Y }]]
 	}
 
 	return [tokens, index + 1, [...newTokensList, tokens[index]]]
 }
 
 
+const recognizeCpuInstructionTypeThruValue = (tokens, index = 0) => {
+	const valueType = tokens[index + 1]?.type
+	return ({
+		isImmediate: () => valueType === valueTypes.IMMEDIATE,
+		isZeroPage: () => valueType === valueTypes.ZERO_PAGE,
+		isZeroPageX: () => valueType === valueTypes.ZERO_PAGE_X,
+		isZeroPageY: () => valueType === valueTypes.ZERO_PAGE_Y,
+		isIndZeroPage: () => valueType === valueTypes.IND_ZERO_PAGE,
+		isAbsolute: () => valueType === valueTypes.ABSOLUTE,
+		isAbsoluteX: () => valueType === valueTypes.ABSOLUTE_X,
+		isAbsoluteY: () => valueType === valueTypes.ABSOLUTE_Y,
+		isIndirect: () => valueType === valueTypes.INDIRECT,
+		isIndirectX: () => valueType === valueTypes.INDIRECT_X,
+		isIndirectY: () => valueType === valueTypes.ABSOLUTE_Y,
+	})
+}
+
+const recConnectCpuInstructionsToValueType = (tokens, index = 0, newTokensList = []) => {
+
+	if (tokens.length <= index)
+		throw newTokensList
+
+	const cpuInstruction = cpuInstructions[tokens[index]?.instruction?.toLowerCase()]
+	const valueType = recognizeCpuInstructionTypeThruValue(tokens, index)
+
+	if (cpuInstruction?.implied)
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.implied] }]]
+
+	else if (valueType.isImmediate())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.immediate] }]]
+
+	else if (valueType.isZeroPage())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.zeroPage] }]]
+
+	else if (valueType.isZeroPageX())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.zeroPageX] }]]
+
+	else if (valueType.isZeroPageY())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.zeroPageY] }]]
+
+	else if (valueType.isIndZeroPage())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indZeroPage] }]]
+
+	else if (valueType.isAbsolute())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.absolute] }]]
+
+	else if (valueType.isAbsoluteX())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.absoluteX] }]]
+
+	else if (valueType.isAbsoluteY())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.absoluteY] }]]
+
+	else if (valueType.isIndirect())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indirect] }]]
+
+	else if (valueType.isIndirectX())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indirectX] }]]
+
+	else if (valueType.isIndirectY())
+		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indirectY] }]]
+
+	return [tokens, index + 1, [...newTokensList, tokens[index]]]
+}
+
+
 const reduceCollectConst = (list, token) => {
-	if (token.type === valueType.CONST)
+	if (token.type === valueTypes.CONST)
 		return [...list, token]
 	else
 		return list
 }
 
-const reduceRemoveConst = (list, token) => token.type === valueType.CONST ? list : [...list, token]
+const reduceRemoveConst = (list, token) => token.type === valueTypes.CONST ? list : [...list, token]
 
-export function checkErrors(tokens) {
+export function parser(tokens) {
 	const recognizeValue = piping(tokens)
 		.pipe(recursion(recGetValueTypeFromToken))
 		.pipe(recursion(recConnectConstWithValue))
@@ -305,9 +371,10 @@ export function checkErrors(tokens) {
 	const tokensWithoutConst = recognizeValue
 		.reduce(reduceRemoveConst, [])
 
-	const replaceConstValueToValueType = piping(tokensWithoutConst)
+	const combineInstructionsToValues = piping(tokensWithoutConst)
 		.pipe(recursion(recReplaceConsToValueType(constList)))
+		.pipe(recursion(recConnectCpuInstructionsToValueType))
 		.valueOf()
 
-	return replaceConstValueToValueType
+	return combineInstructionsToValues
 }
