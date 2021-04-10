@@ -27,7 +27,7 @@ export const types = Object.freeze({
 	CONST_VALUE: inc++,
 })
 
-export const valueType = Object.freeze({
+export const valueTypes = Object.freeze({
 	INDIRECT: inc++,
 	INDIRECT_X: inc++,
 	INDIRECT_Y: inc++,
