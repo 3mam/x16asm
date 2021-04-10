@@ -2,7 +2,8 @@ import { processArg } from './args.js'
 import * as color from 'https://deno.land/std/fmt/colors.ts'
 import { piping } from './tools.js'
 import { tokensFromCode } from './tokenizer.js'
-import { lexer, types } from './lexer.js'
+import { lexer } from './lexer.js'
+import { parser } from './parser.js'
 
 const loadAsmCode = ({ fileName }) => {
 	try {
@@ -12,7 +13,6 @@ const loadAsmCode = ({ fileName }) => {
 	}
 }
 
-const args = Deno.args
 const defaultSettings = {
 	'binaryType': 'prg',
 	'fileName': null
@@ -23,8 +23,7 @@ const tokens = piping(defaultSettings)
 	.pipe(loadAsmCode)
 	.pipe(tokensFromCode)
 	.pipe(lexer)
+	.pipe(parser)
 	.valueOf()
-	//tokens.forEach(el => {
-//	(el.type === types.UNKNOWN) && console.log(el)
-//})
+
 console.log(tokens)
