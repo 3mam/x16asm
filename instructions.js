@@ -1,4 +1,4 @@
-export const cpuInstructions = {
+export const cpuInstructions = Object.freeze({
 	adc: {
 		immediate: 0x69,
 		zeroPage: 0x65,
@@ -406,4 +406,4 @@ export const cpuInstructions = {
 	wai: {
 		implied: 0xCB
 	}
-}
+})
