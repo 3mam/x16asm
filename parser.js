@@ -1,4 +1,4 @@
-import { recursion, piping } from './tools.js'
+import { recursion, piping } from './funcTools.js'
 import { valueTypes, types } from './enum.js'
 import { cpuInstructions } from './instructions.js'
 
