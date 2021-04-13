@@ -1,9 +1,14 @@
+import { tokenData } from './record.js'
+
 const mapSplitToPeaces = (line, lineNumber) =>
 	line.reduce(
 		({ obj = [], str = "", column = 1, ignore = false, skip = false, quotEnd = '' }, char, index, array) => {
 			const nextChar = array[index + 1]
 			const chars = [' ', '\t', '"', '=', '\n', ';', '(', ')', ',', '#', '$', '%', '<', '>']
-			const returnObj = { instruction: str + char, line: lineNumber + 1, column }
+			const returnObj = tokenData()
+				.setToken(str + char)
+				.setLine(lineNumber + 1)
+				.setColumn(column)
 
 			if (char === '\\')
 				return { obj, str: str + char, column, quotEnd, ignore, skip: true }

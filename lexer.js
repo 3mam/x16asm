@@ -1,122 +1,129 @@
 import { cpuInstructions } from './instructions.js'
 import { types } from './enum.js'
 
-const recognizeChars = ({ instruction }) => ({
-	isComment: () => instruction[0] === ';' && instruction[instruction.length - 1] === '\n',
-	isSpace: () => instruction === ' ',
-	isTab: () => instruction === '\t',
-	isLabel: () => instruction[instruction.length - 1] === ':',
-	isFunction: () => instruction[0] === '.',
-	isString: () => instruction[0] === '"' && instruction[instruction.length - 1] === '"',
-	isNumber: () => /^[0-9a-f]+$/gim.test(instruction),
-	isHexValue: () => instruction[0] === '$',
-	isValue: () => instruction[0] === '#',
-	isEqual: () => instruction === '=',
-	isNewLine: () => instruction === '\n',
-	isBinValue: () => instruction === '%',
-	isOpenBracket: () => instruction === '(',
-	isCloseBracket: () => instruction === ')',
-	isComma: () => instruction === ',',
-	isLowByte: () => instruction === '<',
-	isHiByte: () => instruction === '>',
-	isX: () => instruction.toLowerCase() === 'x',
-	isY: () => instruction.toLowerCase() === 'y',
+const recognizeChars = ({ token }) => ({
+	isComment: () => token[0] === ';' && token[token.length - 1] === '\n',
+	isSpace: () => token === ' ',
+	isTab: () => token === '\t',
+	isLabel: () => token[token.length - 1] === ':',
+	isFunction: () => token[0] === '.',
+	isString: () => token[0] === '"' && token[token.length - 1] === '"',
+	isNumber: () => /^[0-9a-f]+$/gim.test(token),
+	isHexValue: () => token[0] === '$',
+	isValue: () => token[0] === '#',
+	isEqual: () => token === '=',
+	isNewLine: () => token === '\n',
+	isBinValue: () => token === '%',
+	isOpenBracket: () => token === '(',
+	isCloseBracket: () => token === ')',
+	isComma: () => token === ',',
+	isLowByte: () => token === '<',
+	isHiByte: () => token === '>',
+	isX: () => token.toLowerCase() === 'x',
+	isY: () => token.toLowerCase() === 'y',
 })
 
-const mapRecognitionTokensFirstStage = token => {
-	const char = recognizeChars(token)
+const mapRecognitionTokensFirstStage = tokenData => {
+	const char = recognizeChars(tokenData.valueOf())
 	if (char.isComment())
-		return { ...token, type: types.COMMENT }
+		return tokenData.setType(types.COMMENT)
 	else if (char.isSpace())
-		return { ...token, type: types.SPACE }
+		return tokenData.setType(types.SPACE)
 	else if (char.isTab())
-		return { ...token, type: types.TAB }
+		return tokenData.setType(types.TAB)
 	else if (char.isLabel())
-		return { ...token, type: types.LABEL }
+		return tokenData.setType(types.LABEL)
 	else if (char.isFunction())
-		return { ...token, type: types.FUNCTION }
+		return tokenData.setType(types.FUNCTION)
 	else if (char.isString())
-		return { ...token, type: types.STRING }
+		return tokenData.setType(types.STRING)
 	else if (char.isValue())
-		return { ...token, type: types.VALUE }
+		return tokenData.setType(types.VALUE)
 	else if (char.isEqual())
-		return { ...token, type: types.EQUAL }
+		return tokenData.setType(types.EQUAL)
 	else if (char.isNewLine())
-		return { ...token, type: types.NEWLINE }
+		return tokenData.setType(types.NEWLINE)
 	else if (char.isNumber())
-		return { ...token, type: types.NUMBER }
+		return tokenData.setType(types.NUMBER)
 	else if (char.isHexValue())
-		return { ...token, type: types.HEX_VALUE }
+		return tokenData.setType(types.HEX_VALUE)
 	else if (char.isBinValue())
-		return { ...token, type: types.BIN_VALUE }
+		return tokenData.setType(types.BIN_VALUE)
 	else if (char.isOpenBracket())
-		return { ...token, type: types.OPEN_BRACKET }
+		return tokenData.setType(types.OPEN_BRACKET)
 	else if (char.isCloseBracket())
-		return { ...token, type: types.CLOSE_BRACKET }
+		return tokenData.setType(types.CLOSE_BRACKET)
 	else if (char.isComma())
-		return { ...token, type: types.COMMA }
+		return tokenData.setType(types.COMMA)
 	else if (char.isLowByte())
-		return { ...token, type: types.LOW_BYTE }
+		return tokenData.setType(types.LOW_BYTE)
 	else if (char.isHiByte())
-		return { ...token, type: types.HI_BYTE }
+		return tokenData.setType(types.HI_BYTE)
 	else if (char.isX())
-		return { ...token, type: types.X }
+		return tokenData.setType(types.X)
 	else if (char.isY())
-		return { ...token, type: types.Y }
+		return tokenData.setType(types.Y)
 	else
-		return { ...token, type: types.UNKNOWN }
+		return tokenData.setType(types.UNKNOWN)
+
 }
 
-const mapFindConstToken = (token, index, array) => {
-	const nextToken = array[index + 1]
-	if (token.type === types.UNKNOWN && nextToken?.type === types.EQUAL)
-		return { ...token, type: types.CONST }
+const mapFindConstToken = (tokenData, index, array) => {
+	const token = tokenData.valueOf()
+	const nextToken = array[index + 1]?.valueOf()
+	if (token.type === types.UNKNOWN && nextToken.type === types.EQUAL)
+		return tokenData.setType(types.CONST)
 	else
-		return token
+		return tokenData
 }
 
-const mapFindLabelInValue = list => token => {
-	if (list.includes(token.instruction))
-		return { ...token, type: types.LABEL_VALUE }
+const mapFindLabelInValue = list => tokenData => {
+	const { token } = tokenData.valueOf()
+	if (list.includes(token))
+		return tokenData.setType(types.LABEL_VALUE)
 	else
-		return token
+		return tokenData
 }
 
-const mapFindConstInValue = list => token => {
-	if (list.includes(token.instruction) && token.type !== types.CONST)
-		return { ...token, type: types.CONST_VALUE }
+const mapFindConstInValue = list => tokenData => {
+	const { token, type } = tokenData.valueOf()
+	if (list.includes(token) && type !== types.CONST)
+		return tokenData.setType(types.CONST_VALUE)
 	else
-		return token
+		return tokenData
 }
 
-const mapFindCpuInstructionsInToken = cpuInstructions => token => {
-	if (typeof cpuInstructions[token.instruction] === 'object')
-		return { ...token, type: types.INSTRUCTION }
+const mapFindCpuInstructionsInToken = cpuInstructions => tokenData => {
+	const { token } = tokenData.valueOf()
+	if (typeof cpuInstructions[token] === 'object')
+		return tokenData.setType(types.INSTRUCTION)
 	else
-		return token
+		return tokenData
 }
 
-const reduceCollectLabel = (list, token) => {
-	if (token.type === types.LABEL)
-		return [...list, token.instruction.substring(0, token.instruction.length - 1)]
+const reduceCollectLabel = (list, tokenData) => {
+	const { token, type } = tokenData.valueOf()
+	if (type === types.LABEL)
+		return [...list, token.substring(0, token.length - 1)]
 	else
 		return list
 }
 
-const reduceCollectConst = (list, token) => {
-	if (token.type === types.CONST)
-		return [...list, token.instruction.substring(0, token.instruction.length)]
+const reduceCollectConst = (list, tokenData) => {
+	const { token, value } = tokenData.valueOf()
+	if (value === types.CONST)
+		return [...list, token.substring(0, token.length)]
 	else
 		return list
 }
 
-const filterRemoveNotImportantTokens = ({ type }) => {
+const filterRemoveNotImportantTokens = (tokenData) => {
+	const { type } = tokenData.valueOf()
 	const typesToIgnore = [types.COMMENT, types.SPACE, types.TAB, types.NEWLINE]
 	return !typesToIgnore.includes(type)
 }
 
-const filterRemoveEqualToken = ({ type }) => !(type === types.EQUAL)
-
+const filterRemoveEqualToken = (tokenData) => !(tokenData.valueOf().type === types.EQUAL)
 
 export function lexer(tokens) {
 	const firstStage = tokens
