@@ -1,22 +1,8 @@
-const isObject = val => typeof val === 'object'
+export const piping = (obj) => ({
+	pipe: (fn) => piping(fn(Object.freeze(obj))),
+	valueOf: () => obj,
+})
 
-function objProtect(obj, fn) {
-	const returnObj = fn(obj)
-	if (Array.isArray(returnObj))
-		return [...returnObj]
-	else if (isObject(returnObj))
-		return { ...obj, ...returnObj }
-	else
-		return returnObj
-}
-
-function pipe(obj) {
-	Object.freeze(obj)
-	this.valueOf = () => obj
-	this.pipe = (fn) => new pipe(objProtect(obj, fn))
-}
-
-export const piping = obj => new pipe(obj)
 export const composition = (...fn) => val => fn.reduce((v, f) => f(v), val)
 
 export const recursion = fn => (...variables) => {
