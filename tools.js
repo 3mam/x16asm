@@ -32,3 +32,21 @@ export const memoize = fn => {
 			return mem.set(val, fn(...variable)).get(val)
 	}
 }
+
+export const is = (obj1, obj2) => {
+	if (Object.keys(obj1).length !== Object.keys(obj2).length)
+		return false
+	for (const val in obj1)
+		if (!obj2.hasOwnProperty(val))
+			return false
+	return true
+}
+
+export const isEqual = (obj1, obj2) => {
+	if (Object.keys(obj1).length !== Object.keys(obj2).length)
+		return false
+	for (const val in obj1)
+		if (obj1[val] !== obj2[val])
+			return false
+	return true
+}
