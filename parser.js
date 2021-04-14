@@ -460,15 +460,16 @@ export function parser(tokens) {
 		.pipe(recursion(recGetValueTypeFromToken))
 		.pipe(recursion(recConnectConstWithValue))
 		.valueOf()
-		const constList = recognizeValue.reduce(reduceCollectConst, [])
-		const tokensWithoutConst = recognizeValue
+
+	const constList = recognizeValue.reduce(reduceCollectConst, [])
+	const tokensWithoutConst = recognizeValue
 		.reduce(reduceRemoveConst, [])
-		
-		const combineInstructionsToValues = piping(tokensWithoutConst)
+
+	const combineInstructionsToValues = piping(tokensWithoutConst)
 		.pipe(recursion(recReplaceConsToValueType(constList)))
 		.pipe(recursion(recConnectCpuInstructionsToValueType))
 		.valueOf()
-		console.log(combineInstructionsToValues.map(v=>v.valueOf()))
+	console.log(combineInstructionsToValues.map(v => v.valueOf()))
 
 	return combineInstructionsToValues
 }
