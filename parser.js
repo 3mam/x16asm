@@ -1,13 +1,7 @@
 import { recursion, piping } from './funcTools.js'
 import { valueTypes, types } from './enum.js'
 import { cpuInstructions } from './instructions.js'
-
-const error = ({ line, column }, errorMessage) => {
-	throw `${errorMessage} in line ${line} column ${column}`
-}
-
-const checkUnknown = ({ type, line, column }) =>
-	type === types.UNKNOWN && error({ line, column }, 'Unknown instruction')
+import { instructionData } from './record.js'
 
 const recognizeInstructionsValue = (tokens, index) => ({
 	isLabelIndirect: () =>
@@ -142,150 +136,210 @@ const strDcmToValue = valueStrDcm => split16to8bit(parseInt(valueStrDcm, 10))
 const strBinToValue = valueStrBin => split16to8bit(parseInt(valueStrBin, 2))
 
 
-const recGetValueTypeFromToken = (tokens, index = 0, newTokensList = []) => {
+const recGetValueTypeFromToken = (tokens, index = 0, instructionList = []) => {
 	if (tokens.length <= index)
-		throw newTokensList
+		throw instructionList
 
 	const instruction = recognizeInstructionsValue(tokens, index)
 
 	if (instruction.isLabelIndirectY())
-		return [tokens, index + 5, [...newTokensList,
-		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueTypes.LABEL_INDIRECT_Y }]]
+		return [tokens, index + 5, [...instructionList, instructionData()
+			.setName(tokens[index + 1].token)
+			.setValue([0, 0])
+			.setType(valueTypes.LABEL_INDIRECT_Y)
+		]]
 
 	else if (instruction.isLabelIndirectX())
-		return [tokens, index + 5, [...newTokensList,
-		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueTypes.LABEL_INDIRECT_X }]]
+		return [tokens, index + 5, [...instructionList, instructionData()
+			.setName(tokens[index + 1].token)
+			.setValue([0, 0])
+			.setType(valueTypes.LABEL_INDIRECT_X)
+		]]
 
 	else if (instruction.isLabelIndirect())
-		return [tokens, index + 3, [...newTokensList,
-		{ name: tokens[index + 1].instruction, value: [0, 0], type: valueTypes.LABEL_INDIRECT }]]
+		return [tokens, index + 3, [...instructionList, instructionData()
+			.setName(tokens[index + 1].token)
+			.setValue([0, 0])
+			.setType(valueTypes.LABEL_INDIRECT)
+		]]
 
 	else if (instruction.isIndirectY())
-		return [tokens, index + 6, [...newTokensList,
-		{ value: strHexToValue(tokens[index + 2].instruction), type: valueTypes.INDIRECT_Y }]]
+		return [tokens, index + 6, [...instructionList, instructionData()
+			.setName(tokens[index + 2].token)
+			.setValue(strHexToValue(tokens[index + 2].token))
+			.setType(valueTypes.INDIRECT_Y)
+		]]
 
 	else if (instruction.isIndirectX())
-		return [tokens, index + 6, [...newTokensList,
-		{ value: strHexToValue(tokens[index + 2].instruction), type: valueTypes.INDIRECT_X }]]
+		return [tokens, index + 6, [...instructionList, instructionData()
+			.setName(tokens[index + 2].token)
+			.setValue(strHexToValue(tokens[index + 2].token))
+			.setType(valueTypes.INDIRECT_X)
+		]]
 
 	else if (instruction.isIndirect()) {
-		const val = strHexToValue(tokens[index + 2].instruction)
-		return [tokens, index + 4, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueTypes.IND_ZERO_PAGE : valueTypes.INDIRECT }]]
+		const token = tokens[index + 2].token
+		const val = strHexToValue(token)
+		return [tokens, index + 4, [...instructionList, instructionData()
+			.setName(token)
+			.setValue(val)
+			.setType(val <= 255 ? valueTypes.IND_ZERO_PAGE : valueTypes.INDIRECT)
+		]]
 	}
 
 	else if (instruction.isHexValue())
-		return [tokens, index + 3, [...newTokensList,
-		{ value: strHexToValue(tokens[index + 2].instruction), type: valueTypes.IMMEDIATE }]]
+		return [tokens, index + 3, [...instructionList, instructionData()
+			.setName(tokens[index + 2].token)
+			.setValue(strHexToValue(tokens[index + 2].token))
+			.setType(valueTypes.IMMEDIATE)
+		]]
 
 	else if (instruction.isBinValue())
-		return [tokens, index + 3, [...newTokensList,
-		{ value: strBinToValue(tokens[index + 2].instruction), type: valueTypes.IMMEDIATE }]]
+		return [tokens, index + 3, [...instructionList, instructionData()
+			.setName(tokens[index + 2].token)
+			.setValue(strBinToValue(tokens[index + 2].token))
+			.setType(valueTypes.IMMEDIATE)
+		]]
 
 	else if (instruction.isValue())
-		return [tokens, index + 2, [...newTokensList,
-		{ value: strDcmToValue(tokens[index + 1].instruction), type: valueTypes.IMMEDIATE }]]
+		return [tokens, index + 2, [...instructionList, instructionData()
+			.setName(tokens[index + 1].token)
+			.setValue(strDcmToValue(tokens[index + 1].token))
+			.setType(valueTypes.IMMEDIATE)
+		]]
 
 	else if (instruction.isHexAddress()) {
-		const val = strHexToValue(tokens[index + 1].instruction)
-		return [tokens, index + 2, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueTypes.ZERO_PAGE : valueTypes.ABSOLUTE }]]
+		const token = tokens[index + 1].token
+		const val = strHexToValue(token)
+		return [tokens, index + 2, [...instructionList, instructionData()
+			.setName(token)
+			.setValue(val)
+			.setType(val <= 255 ? valueTypes.ZERO_PAGE : valueTypes.ABSOLUTE)
+		]]
 	}
 
 	else if (instruction.isHexAddressX()) {
-		const val = strHexToValue(tokens[index + 1].instruction)
-		return [tokens, index + 4, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueTypes.ZERO_PAGE_X : valueTypes.ABSOLUTE_X }]]
+		const token = tokens[index + 1].token
+		const val = strHexToValue(token)
+		return [tokens, index + 4, [...instructionList, instructionData()
+			.setName(token)
+			.setValue(val)
+			.setType(val <= 255 ? valueTypes.ZERO_PAGE : valueTypes.ABSOLUTE)
+		]]
 	}
 
 	else if (instruction.isHexAddressY()) {
-		const val = strHexToValue(tokens[index + 1].instruction)
-		return [tokens, index + 4, [...newTokensList,
-		{ value: val, type: val <= 255 ? valueTypes.ZERO_PAGE_Y : valueTypes.ABSOLUTE_Y }]]
+		const token = tokens[index + 1].token
+		const val = strHexToValue(token)
+		return [tokens, index + 4, [...instructionList, instructionData()
+			.setName(token)
+			.setValue(val)
+			.setType(val <= 255 ? valueTypes.ZERO_PAGE_Y : valueTypes.ABSOLUTE_Y)
+		]]
 	}
 
 	else if (instruction.isAbsoluteLabel())
-		return [tokens, index + 1, [...newTokensList,
-		{ name: tokens[index].instruction, value: [0, 0], type: valueTypes.LABEL_ABSOLUTE }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(tokens[index + 1].token)
+			.setValue([0, 0])
+			.setType(valueTypes.LABEL_ABSOLUTE)
+		]]
 
 	else if (instruction.isAbsoluteLabelX())
-		return [tokens, index + 3, [...newTokensList,
-		{ name: tokens[index].instruction, value: [0, 0], type: valueTypes.LABEL_ABSOLUTE_X }]]
+		return [tokens, index + 3, [...instructionList, instructionData()
+			.setName(tokens[index].token)
+			.setValue([0, 0])
+			.setType(valueTypes.LABEL_ABSOLUTE_X)
+		]]
 
 	else if (instruction.isAbsoluteLabelY())
-		return [tokens, index + 3, [...newTokensList,
-		{ name: tokens[index].instruction, value: [0, 0], type: valueTypes.LABEL_ABSOLUTE_Y }]]
+		return [tokens, index + 3, [...instructionList, instructionData()
+			.setName(tokens[index].token)
+			.setValue([0, 0])
+			.setType(valueTypes.LABEL_ABSOLUTE_Y)
+		]]
 
-	return [tokens, index + 1, [...newTokensList, tokens[index]]]
+	return [tokens, index + 1, [...instructionList, tokens[index]]]
 }
 
-const recConnectConstWithValue = (tokens, index = 0, newTokensList = []) => {
+const recConnectConstWithValue = (tokens, index = 0, instructionList = []) => {
 	if (tokens.length <= index)
-		throw newTokensList
+		throw instructionList
 
 	const token = tokens[index]
 	const nextToken = tokens[index + 1]
 	const value = [valueTypes.IMMEDIATE, valueTypes.ABSOLUTE, valueTypes.ZERO_PAGE]
-	if (token.type === types.CONST)
+	if (token?.type === types.CONST)
 		if (value.includes(nextToken?.type))
-			return [tokens, index + 2, [...newTokensList,
-			{ name: token.instruction, value: [...nextToken.value], type: valueTypes.CONST }]]
+			return [tokens, index + 2, [...instructionList, instructionData()
+				.setName(token.token)
+				.setValue(nextToken.value)
+				.setType(valueTypes.CONST)
+			]]
 		else
-			return [tokens, index + 2, [...newTokensList,
-			{ name: token.instruction, value: null, type: -1 }]]
+			return [tokens, index + 2, [...instructionList, instructionData()
+				.setName(token.token)
+				.setValue(null)
+				.setType(-1)
+			]]
 
-	return [tokens, index + 1, [...newTokensList, tokens[index]]]
+	return [tokens, index + 1, [...instructionList, tokens[index]]]
 }
 
-const recReplaceConsToValueType = constList => (tokens, index = 0, newTokensList = []) => {
+const recReplaceConsToValueType = constList => (tokens, index = 0, instructionList = []) => {
 
 	if (constList.length === 0)
 		throw tokens
 
 	if (tokens.length <= index)
-		throw newTokensList
+		throw instructionList
 
 	const cons = recognizeInstructionsValueConst(tokens, index)
 
 	if (cons.isIndirect()) {
-		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.instruction)
-		return [tokens, index + 3, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.INDIRECT : valueTypes.IND_ZERO_PAGE }]]
+		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.token)
+		return [tokens, index + 3, [...instructionList, consToken
+			.setType(consToken.value.length === 2 ? valueTypes.INDIRECT : valueTypes.IND_ZERO_PAGE)
+		]]
 	}
 
 	else if (cons.isIndirectX()) {
-		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.instruction)
-		return [tokens, index + 5, [...newTokensList,
-		{ value: consToken.value, type: valueTypes.INDIRECT_X }]]
+		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.token)
+		return [tokens, index + 5, [...instructionList, consToken
+			.setType(valueTypes.INDIRECT_X)
+		]]
 	}
 
 	else if (cons.isIndirectY()) {
-		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.instruction)
-		return [tokens, index + 5, [...newTokensList,
-		{ value: consToken.value, type: valueTypes.INDIRECT_Y }]]
+		const consToken = constList.find(obj => obj.name === tokens[index + 1]?.token)
+		return [tokens, index + 5, [...instructionList, consToken
+			.setType(valueTypes.INDIRECT_Y)
+		]]
 	}
 
 	else if (cons.isAbsolute()) {
-		const consToken = constList.find(obj => obj.name === tokens[index]?.instruction)
-		return [tokens, index + 1, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.ABSOLUTE : valueTypes.ZERO_PAGE }]]
+		const consToken = constList.find(obj => obj.name === tokens[index]?.token)
+		return [tokens, index + 1, [...instructionList, consToken
+			.setType(consToken.value.length === 2 ? valueTypes.ABSOLUTE : valueTypes.ZERO_PAGE)
+		]]
 	}
 
 	else if (cons.isAbsoluteX()) {
-		const consToken = constList.find(obj => obj.name === tokens[index]?.instruction)
-		return [tokens, index + 3, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.ABSOLUTE_X : valueTypes.ZERO_PAGE_X }]]
+		const consToken = constList.find(obj => obj.name === tokens[index]?.token)
+		return [tokens, index + 3, [...instructionList, consToken
+			.setType(consToken.value.length === 2 ? valueTypes.ABSOLUTE_X : valueTypes.ZERO_PAGE_X)
+		]]
 	}
 
 	else if (cons.isAbsoluteY()) {
-		const consToken = constList.find(obj => obj.name === tokens[index]?.instruction)
-		return [tokens, index + 3, [...newTokensList,
-		{ value: consToken.value, type: consToken.value.length === 2 ? valueTypes.ABSOLUTE_Y : valueTypes.ZERO_PAGE_Y }]]
+		const consToken = constList.find(obj => obj.name === tokens[index]?.token)
+		return [tokens, index + 3, [...instructionList, consToken
+			.setType(consToken.value.length === 2 ? valueTypes.ABSOLUTE_Y : valueTypes.ZERO_PAGE_Y)
+		]]
 	}
 
-	return [tokens, index + 1, [...newTokensList, tokens[index]]]
+	return [tokens, index + 1, [...instructionList, tokens[index]]]
 }
-
 
 const recognizeCpuInstructionTypeThruValue = (tokens, index = 0) => {
 	const valueType = tokens[index + 1]?.type
@@ -304,53 +358,93 @@ const recognizeCpuInstructionTypeThruValue = (tokens, index = 0) => {
 	})
 }
 
-const recConnectCpuInstructionsToValueType = (tokens, index = 0, newTokensList = []) => {
+const recConnectCpuInstructionsToValueType = (tokens, index = 0, instructionList = []) => {
 
 	if (tokens.length <= index)
-		throw newTokensList
+		throw instructionList
 
-	const cpuInstruction = cpuInstructions[tokens[index]?.instruction?.toLowerCase()]
+	const token = tokens[index]?.token?.toLowerCase()
+
+	if (!cpuInstructions.hasOwnProperty(token))
+		return [tokens, index + 1, [...instructionList, tokens[index]]]
+
+	const cpuInstruction = cpuInstructions[token]
 	const valueType = recognizeCpuInstructionTypeThruValue(tokens, index)
 
 	if (cpuInstruction?.implied)
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.implied] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.implied])
+		]]
 
 	else if (valueType.isImmediate())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.immediate] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.immediate])
+		]]
 
 	else if (valueType.isZeroPage())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.zeroPage] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.zeroPage])
+		]]
 
 	else if (valueType.isZeroPageX())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.zeroPageX] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.zeroPageX])
+		]]
 
 	else if (valueType.isZeroPageY())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.zeroPageY] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.zeroPageY])
+		]]
 
 	else if (valueType.isIndZeroPage())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indZeroPage] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.indZeroPage])
+		]]
 
 	else if (valueType.isAbsolute())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.absolute] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.absolute])
+		]]
 
 	else if (valueType.isAbsoluteX())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.absoluteX] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.absoluteX])
+		]]
 
 	else if (valueType.isAbsoluteY())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.absoluteY] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.absoluteY])
+		]]
 
 	else if (valueType.isIndirect())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indirect] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.indirect])
+		]]
 
 	else if (valueType.isIndirectX())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indirectX] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.indirectX])
+		]]
 
 	else if (valueType.isIndirectY())
-		return [tokens, index + 1, [...newTokensList, { value: [cpuInstruction.indirectY] }]]
+		return [tokens, index + 1, [...instructionList, instructionData()
+			.setName(token)
+			.setValue([cpuInstruction.indirectY])
+		]]
 
-	return [tokens, index + 1, [...newTokensList, tokens[index]]]
+	return [tokens, index + 1, [...instructionList, tokens[index]]]
 }
-
 
 const reduceCollectConst = (list, token) => {
 	if (token.type === valueTypes.CONST)
@@ -366,15 +460,15 @@ export function parser(tokens) {
 		.pipe(recursion(recGetValueTypeFromToken))
 		.pipe(recursion(recConnectConstWithValue))
 		.valueOf()
-
-	const constList = recognizeValue.reduce(reduceCollectConst, [])
-	const tokensWithoutConst = recognizeValue
+		const constList = recognizeValue.reduce(reduceCollectConst, [])
+		const tokensWithoutConst = recognizeValue
 		.reduce(reduceRemoveConst, [])
-
-	const combineInstructionsToValues = piping(tokensWithoutConst)
+		
+		const combineInstructionsToValues = piping(tokensWithoutConst)
 		.pipe(recursion(recReplaceConsToValueType(constList)))
 		.pipe(recursion(recConnectCpuInstructionsToValueType))
 		.valueOf()
+		console.log(combineInstructionsToValues.map(v=>v.valueOf()))
 
 	return combineInstructionsToValues
 }
