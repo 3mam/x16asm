@@ -1,4 +1,4 @@
-import { recursion } from './funcTools.js'
+import { recursion } from './func.js'
 import * as color from 'https://deno.land/std/fmt/colors.ts'
 
 const findFileName = string => string.search(/^.*\.(asm|s)$/) === -1 ? null : string
