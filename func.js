@@ -1,7 +1,4 @@
-export const piping = (obj) => ({
-	pipe: (fn) => piping(fn(Object.freeze(obj))),
-	valueOf: () => obj,
-})
+export const piping = val => fn => fn ? piping(fn(val)) : val
 
 export const composition = (...fn) => val => fn.reduce((v, f) => f(v), val)
 
@@ -33,20 +30,43 @@ export const memoize = fn => {
 	}
 }
 
-export const is = (obj1, obj2) => {
+const recIs = (obj1, obj2) => {
 	if (Object.keys(obj1).length !== Object.keys(obj2).length)
-		return false
-	for (const val in obj1)
-		if (!obj2.hasOwnProperty(val))
-			return false
+		throw false
+	for (const val in obj1) {
+		if (typeof obj1[val] === 'object')
+			recIs(obj1[val], obj2[val])
+		else if (!obj2.hasOwnProperty(val))
+			throw false
+	}
 	return true
 }
 
-export const isEqual = (obj1, obj2) => {
+export const is = (obj1, obj2) => {
+	try {
+		return recIs(obj1, obj2)
+	} catch (val) {
+		return val
+	}
+}
+
+const recIsEqual = (obj1, obj2) => {
 	if (Object.keys(obj1).length !== Object.keys(obj2).length)
-		return false
-	for (const val in obj1)
-		if (obj1[val] !== obj2[val])
-			return false
+		throw false
+	for (const val in obj1) {
+		if (typeof obj1[val] === 'object')
+			recIsEqual(obj1[val], obj2[val])
+		else if (obj1[val] !== obj2[val])
+			throw false
+	}
 	return true
+}
+
+
+export const isEqual = (obj1, obj2) => {
+	try {
+		return recIsEqual(obj1, obj2)
+	} catch (val) {
+		return val
+	}
 }

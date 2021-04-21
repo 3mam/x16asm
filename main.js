@@ -19,12 +19,12 @@ const defaultSettings = {
 }
 
 const tokens = piping(defaultSettings)
-	.pipe(processArg)
-	.pipe(loadAsmCode)
-	.pipe(tokensFromCode)
-	.pipe(lexer)
-	.pipe(parser)
-	.valueOf()
+	(processArg)
+	(loadAsmCode)
+	(tokensFromCode)
+	(lexer)
+	(parser)
+	()
 	.map(v=>v.valueOf())
 
 //console.log(tokens)
