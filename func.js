@@ -1,4 +1,4 @@
-export const piping = val => fn => fn ? piping(fn(Object.freeze(val))) : Object.freeze(val)
+export const piping = val => fn => fn ? piping(fn(val)) : val
 
 export const composition = (...fn) => val => fn.reduce((v, f) => f(v), val)
 
