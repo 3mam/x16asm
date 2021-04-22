@@ -6,10 +6,11 @@ const mapSplitToPeaces = (line, lineNumber) =>
 			const nextChar = array[index + 1]
 			const chars = [' ', '\t', '"', '=', '\n', ';', '(', ')', ',', '#', '$', '%', '<', '>']
 			const returnObj = tokenData()
-				.setToken(str + char)
-				.setLine(lineNumber + 1)
-				.setColumn(column)
-
+				.token(str + char)
+				.line(lineNumber + 1)
+				.column(column)
+				.valueOf()
+				
 			if (char === '\\')
 				return { obj, str: str + char, column, quotEnd, ignore, skip: true }
 

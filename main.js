@@ -25,6 +25,5 @@ const tokens = piping(defaultSettings)
 	(lexer)
 	(parser)
 	()
-	.map(v=>v.valueOf())
 
-//console.log(tokens)
+console.log(tokens)
