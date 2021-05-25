@@ -365,18 +365,20 @@ const reduceRemoveConst = (list, token) => token.type === valueTypes.CONST ? lis
 
 export function parser(tokens) {
 	const recognizeValue = piping(tokens)
-		(recursion(recGetValueTypeFromToken))
-		(recursion(recConnectConstWithValue))
-		()
+		(
+			recursion(recGetValueTypeFromToken),
+			recursion(recConnectConstWithValue)
+		)
 
 	const constList = recognizeValue.reduce(reduceCollectConst, [])
 	const tokensWithoutConst = recognizeValue
 		.reduce(reduceRemoveConst, [])
 
-	const combineInstructionsToValues = piping(tokensWithoutConst)
-		(recursion(recReplaceConsToValueType(constList)))
-		(recursion(recConnectCpuInstructionsToValueType))
-		()
+	const combineInstructionsToValues = piping(
+		tokensWithoutConst
+		, recursion(recReplaceConsToValueType(constList))
+		, recursion(recConnectCpuInstructionsToValueType)
+	)
 
 	return combineInstructionsToValues
 }

@@ -18,12 +18,13 @@ const defaultSettings = {
 	'fileName': null
 }
 
-const tokens = piping(defaultSettings)
-	(processArg)
-	(loadAsmCode)
-	(tokensFromCode)
-	(lexer)
-	(parser)
-	()
+const tokens = piping(
+	defaultSettings
+	, processArg
+	, loadAsmCode
+	, tokensFromCode
+	, lexer
+	, parser
+)
 
 console.log(tokens)
