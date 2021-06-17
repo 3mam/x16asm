@@ -10,7 +10,7 @@ const help = `
 -b binary type output (bin or prg(default))
 `
 
-const parserArgs = (argsArray, { fileName, output, binaryType }, arrayPosition = 0) => {
+const recParserArgs = (argsArray, { fileName, output, binaryType }, arrayPosition = 0) => {
 	const arrayNexPosition = arrayPosition + 1
 	const arg = argsArray[arrayPosition]
 	const nextArg = argsArray[arrayNexPosition]
@@ -31,7 +31,7 @@ const parserArgs = (argsArray, { fileName, output, binaryType }, arrayPosition =
 }
 
 export function processArg({ fileName, output, preCompile, binaryType }) {
-	const argsObject = recursion(parserArgs)(Deno.args, { fileName, output, preCompile, binaryType })
+	const argsObject = recursion(recParserArgs)(Deno.args, { fileName, output, preCompile, binaryType })
 	if (typeof argsObject === 'string') {
 		console.log(color.green(argsObject))
 		Deno.exit(0)
