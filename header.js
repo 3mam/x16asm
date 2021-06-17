@@ -1,0 +1,10 @@
+
+export const header = [
+  0x08, 0x01,//address to load program
+  0x08, 0x0c,//address to basic end
+  0x00, 0x01,//basic line number
+  0x9e,//basic sys function 
+  0x31, 0x36, 0x30, 0x32,//2061 in string value, mean $080D in hex
+  0x00,//\n
+  0x00, 0x00,//end basic program
+]
