@@ -4,6 +4,7 @@ import { piping } from './func.js'
 import { tokensFromCode } from './tokenizer.js'
 import { lexer } from './lexer.js'
 import { parser } from './parser.js'
+import { header } from './header.js'
 
 const loadAsmCode = ({ fileName }) => {
 	try {
@@ -27,5 +28,6 @@ const tokens = piping(
 	, lexer
 	, parser
 )
-
-console.log(tokens)
+const output = new Uint8Array([...header, ...tokens.reduce((p, c) => [...p, ...c.value], [])])
+console.log(output)
+Deno.writeFileSync('out', output)
