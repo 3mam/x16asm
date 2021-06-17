@@ -10,6 +10,7 @@ const loadAsmCode = ({ fileName }) => {
 		return Deno.readTextFileSync(fileName)
 	} catch (error) {
 		console.log(color.red(`File ${color.white(fileName)} not found`))
+		Deno.exit(-1)
 	}
 }
 
