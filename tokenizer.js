@@ -2,7 +2,7 @@ import { tokenData } from './record.js'
 
 const mapSplitToPeaces = (line, lineNumber) =>
 	line.reduce(
-		({ obj = [], str = "", column = 1, ignore = false, skip = false, quotEnd = '' }, char, index, array) => {
+		({ obj = [], str = "", column = 1, ignore = false, skip = false, endChar = '' }, char, index, array) => {
 			const nextChar = array[index + 1]
 			const chars = [' ', '\t', '"', '=', '\n', ';', '(', ')', ',', '#', '$', '%', '<', '>']
 			const returnObj = tokenData()
@@ -12,22 +12,22 @@ const mapSplitToPeaces = (line, lineNumber) =>
 				.valueOf()
 				
 			if (char === '\\')
-				return { obj, str: str + char, column, quotEnd, ignore, skip: true }
+				return { obj, str: str + char, column, endChar, ignore, skip: true }
 
 			if (skip)
-				return { obj, str: str + char, column, quotEnd, ignore }
+				return { obj, str: str + char, column, endChar, ignore }
 
-			if (quotEnd === char)
+			if (endChar === char)
 				return { obj: [...obj, returnObj], column: index + 2 }
 
 			if (char === '"')
-				return { obj, str: str + char, column, quotEnd: '"', ignore: true }
+				return { obj, str: str + char, column, endChar: '"', ignore: true }
 
 			if (char === ';')
-				return { obj, str: str + char, column, quotEnd: '\n', ignore: true }
+				return { obj, str: str + char, column, endChar: '\n', ignore: true }
 
 			if (ignore)
-				return { obj, str: str + char, column, quotEnd, ignore }
+				return { obj, str: str + char, column, endChar, ignore }
 
 			if (chars.includes(char))
 				return { obj: [...obj, returnObj], column: char == '\t' ? index + 3 : index + 2 }
