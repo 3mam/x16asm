@@ -364,11 +364,11 @@ const reduceCollectConst = (list, token) => {
 const reduceRemoveConst = (list, token) => token.type === valueTypes.CONST ? list : [...list, token]
 
 export function parser(tokens) {
-	const recognizeValue = piping(tokens)
-		(
-			recursion(recGetValueTypeFromToken),
-			recursion(recConnectConstWithValue)
-		)
+	const recognizeValue = piping(
+		tokens
+		, recursion(recGetValueTypeFromToken)
+		, recursion(recConnectConstWithValue)
+	)
 
 	const constList = recognizeValue.reduce(reduceCollectConst, [])
 	const tokensWithoutConst = recognizeValue
